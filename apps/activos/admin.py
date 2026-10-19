@@ -9,7 +9,7 @@ from django.template.response import TemplateResponse
 from django.urls import path
 from simple_history.admin import SimpleHistoryAdmin
 
-from . import importacion
+from . import importacion, servicios
 from .models import CoordinadorMaquina, EstadoCuraduria, NodoActivo
 
 CARPETA_IMPORTACIONES = settings.DATA_DIR / "importaciones"
@@ -39,7 +39,7 @@ class NodoActivoAdmin(SimpleHistoryAdmin):
     fields = ["nombre", "nivel", "padre", "ruta", "nombre_normalizado", "origen", "estado_curaduria", "is_active",
               "fusionado_en", "creado_por", "creado_en", "actualizado_en"]
     inlines = [HijosInline]
-    actions = ["aprobar", "desactivar"]
+    actions = ["aprobar", "desactivar", "fusionar_nodos"]
     change_list_template = "admin/activos/nodoactivo/change_list.html"
 
     def has_delete_permission(self, request, obj=None):
@@ -127,6 +127,46 @@ class NodoActivoAdmin(SimpleHistoryAdmin):
             nodo.estado_curaduria = EstadoCuraduria.APROBADO
             nodo.save()  # save() uno a uno para que quede en el historial.
         self.message_user(request, "Nodos aprobados.", messages.SUCCESS)
+
+    @admin.action(description="Fusionar nodos duplicados…")
+    def fusionar_nodos(self, request, queryset):
+        """Paso 1: elegir el nodo correcto entre los seleccionados. Paso 2: fusionar los demás en él."""
+        nodos = list(queryset.filter(is_active=True).select_related("padre"))
+        if len(nodos) < 2:
+            self.message_user(request, "Seleccione al menos dos nodos activos para fusionar.", messages.ERROR)
+            return None
+        if len({n.nivel for n in nodos}) > 1:
+            self.message_user(request, "Solo se fusionan nodos del mismo nivel.", messages.ERROR)
+            return None
+
+        if "correcto" in request.POST:
+            correcto = next((n for n in nodos if str(n.pk) == request.POST["correcto"]), None)
+            if correcto is None:
+                self.message_user(request, "Elija cuál es el nodo correcto.", messages.ERROR)
+                return None
+            total = {"tickets": 0, "hijos_movidos": 0, "hijos_fusionados": 0}
+            for duplicado in nodos:
+                if duplicado.pk != correcto.pk:
+                    duplicado.refresh_from_db()  # una fusión anterior pudo cambiarlo
+                    if duplicado.is_active:
+                        servicios.fusionar(correcto, duplicado, total)
+            self.message_user(
+                request,
+                f"Fusionados en «{correcto.ruta}»: {total['tickets']} tickets y {total['hijos_movidos']} hijos movidos, "
+                f"{total['hijos_fusionados']} hijos con el mismo nombre fusionados.",
+                messages.SUCCESS,
+            )
+            return None
+
+        for nodo in nodos:
+            nodo.num_tickets = nodo.tickets.count()
+            nodo.num_hijos = nodo.hijos.filter(is_active=True).count()
+        contexto = {
+            **self.admin_site.each_context(request), "opts": self.model._meta, "title": "Fusionar nodos duplicados",
+            "nodos": nodos, "accion": "fusionar_nodos",
+            "seleccionados": request.POST.getlist(admin.helpers.ACTION_CHECKBOX_NAME),
+        }
+        return TemplateResponse(request, "admin/activos/nodoactivo/fusionar.html", contexto)
 
     @admin.action(description="Desactivar (no se borra)")
     def desactivar(self, request, queryset):

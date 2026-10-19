@@ -1,0 +1,46 @@
+{% extends "operador/_base_operador.html" %}
+{% load niveles %}
+{% block titulo %}Reportar falla · Mantenimiento{% endblock %}
+
+{% block paso %}
+  {% include "operador/_pasos.html" %}
+  {% include "operador/_ruta.html" %}
+
+  {% if nodo %}
+    {# El nodo donde está parado el operador, con el color de su nivel. #}
+    <div class="rounded-2xl p-4 shadow {{ nodo.nivel|estilo_nivel:'suave' }}">
+      <div class="text-sm font-semibold uppercase tracking-wide">Usted está en: {{ nodo.get_nivel_display }}</div>
+      <div class="text-2xl font-bold">{{ nodo.nombre }}</div>
+      <a href="{% url 'describir' nodo.pk %}"
+         class="mt-3 block rounded-xl bg-red-600 p-4 text-center text-xl font-bold text-white shadow">
+        Reportar falla aquí
+      </a>
+    </div>
+  {% else %}
+    <div data-banner-borrador></div>
+  {% endif %}
+
+  {% if nivel_hijos %}
+    <div class="mt-6 rounded-2xl p-4 shadow {{ nivel_hijos|estilo_nivel:'banda' }}">
+      <div class="text-sm font-semibold uppercase tracking-wide opacity-90">Paso {{ nivel_hijos }} de 5 · {{ nivel_hijos.label }}</div>
+      <div class="text-2xl font-bold">
+        {% if nodo %}¿Sabe dónde exactamente? Elija {{ nivel_hijos|estilo_nivel:'articulo' }} {{ nivel_hijos.label|lower }}
+        {% else %}¿Dónde está la falla? Elija la máquina{% endif %}
+      </div>
+    </div>
+
+    <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+      {% for hijo in hijos %}
+        <a href="{% url 'reportar_nodo' hijo.pk %}"
+           class="flex min-h-20 flex-col justify-center rounded-2xl p-4 shadow active:brightness-95 {{ hijo.nivel|estilo_nivel:'boton' }}">
+          <span class="text-xs font-semibold uppercase opacity-70">{{ hijo.get_nivel_display }}</span>
+          <span class="text-lg font-semibold">{{ hijo.nombre }}</span>
+        </a>
+      {% endfor %}
+      <a href="{% url 'crear_nodo' %}{% if nodo %}?padre={{ nodo.pk }}{% endif %}"
+         class="flex min-h-20 items-center justify-center rounded-2xl border-2 border-dashed border-slate-400 p-4 text-center text-lg font-semibold text-slate-600">
+        + Crear {{ nivel_hijos.label|lower }}
+      </a>
+    </div>
+  {% endif %}
+{% endblock %}

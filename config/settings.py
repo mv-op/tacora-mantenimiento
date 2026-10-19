@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "apps.tickets",
     "apps.notificaciones",
     "apps.agente",
+    "apps.operador",
 ]
 
 MIDDLEWARE = [
@@ -95,6 +96,8 @@ DATABASES = {
             ),
             "transaction_mode": "IMMEDIATE",
         },
+        # Las pruebas usan archivo (no memoria) para comportarse igual que la base real con WAL.
+        "TEST": {"NAME": DATA_DIR / "pruebas.sqlite3"},
     }
 }
 

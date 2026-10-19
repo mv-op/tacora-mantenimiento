@@ -3,11 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token }}">
   <title>{% block titulo %}Mantenimiento{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
   <script src="{% static 'vendor/htmx.min.js' %}" defer></script>
 </head>
-<body class="min-h-screen bg-slate-100 text-slate-900" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+<body class="min-h-screen bg-slate-100 text-slate-900" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+      {% if user.is_authenticated %}data-usuario="{{ user.pk }}" data-url-enviar="{% url 'enviar_reporte' %}"{% endif %}>
   <header class="sticky top-0 z-10 flex items-center justify-between gap-3 bg-slate-900 px-4 py-3 text-white">
     <div id="reloj" class="text-4xl font-bold tabular-nums sm:text-5xl" data-epoch-ms="{% now 'U' %}000">{% now "H:i" %}</div>
     {% if user.is_authenticated %}
@@ -31,13 +33,11 @@
   </header>
 
   <main class="mx-auto max-w-3xl p-4">
-    {% if messages %}
-      {% for mensaje in messages %}
-        <div class="mb-4 rounded-xl bg-blue-100 p-4 text-blue-900">{{ mensaje }}</div>
-      {% endfor %}
-    {% endif %}
+    {% block mensajes %}{% include "_mensajes.html" %}{% endblock %}
     {% block contenido %}{% endblock %}
   </main>
+
+  <div id="aviso-flotante" hidden class="fixed inset-x-4 bottom-4 z-30 mx-auto max-w-md rounded-xl bg-slate-900 p-4 text-center text-white shadow-xl"></div>
 
   {% if user.is_authenticated %}
     <div id="aviso-inactividad" hidden class="fixed inset-0 z-20 flex items-center justify-center bg-black/60 p-4">
@@ -84,6 +84,7 @@
   </script>
 
   {% if user.is_authenticated %}
+  <script src="{% static 'js/reportes.js' %}"></script>
   <script>
     // Cierre por inactividad. El servidor es quien manda; aquí solo se avisa un minuto antes.
     // Tocar o escribir cuenta como uso y se informa al servidor como máximo una vez por minuto.

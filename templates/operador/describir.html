@@ -1,0 +1,47 @@
+{% extends "operador/_base_operador.html" %}
+{% load niveles %}
+{% block titulo %}Describir falla · Mantenimiento{% endblock %}
+
+{% block paso %}
+  {% with enlazar_ultimo=True %}{% include "operador/_ruta.html" %}{% endwith %}
+
+  <div class="mb-3 rounded-2xl p-4 shadow {{ nodo.nivel|estilo_nivel:'suave' }}">
+    <div class="text-sm font-semibold uppercase tracking-wide">Falla en: {{ nodo.get_nivel_display }}</div>
+    <div class="text-2xl font-bold">{{ nodo.nombre }}</div>
+  </div>
+
+  {# El envío lo hace reportes.js (con UUID, borrador y reenvío sin conexión), no hx-boost. #}
+  <form data-reporte data-nodo="{{ nodo.pk }}" data-ruta="{{ nodo.ruta }}" data-minimo="{{ minimo }}"
+        hx-boost="false" class="space-y-5 rounded-2xl bg-white p-6 shadow">
+    <h1 class="text-2xl font-bold">Describa la falla</h1>
+
+    <div data-errores hidden class="rounded-xl bg-red-100 p-4 text-red-800"></div>
+
+    <label class="block">
+      <span class="text-lg font-semibold">¿Qué está pasando?</span>
+      <textarea name="descripcion" rows="5" required
+                placeholder="Ej.: La bomba hace un ruido fuerte desde esta mañana y gotea aceite."
+                class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-lg"></textarea>
+      <span class="mt-1 block text-sm text-slate-500">
+        <span data-contador>0</span> / {{ minimo }} caracteres mínimo · Puede dictar con el micrófono del teclado.
+      </span>
+    </label>
+
+    <fieldset class="space-y-3">
+      <legend class="text-lg font-semibold">¿Qué tan grave es?</legend>
+      {% for valor, etiqueta, ayuda in criticidades %}
+        <label class="block cursor-pointer rounded-2xl border-4 bg-slate-50 p-4
+                      {% if valor == 'critica' %}border-red-200 has-checked:border-red-600 has-checked:bg-red-50
+                      {% elif valor == 'urgente' %}border-orange-200 has-checked:border-orange-500 has-checked:bg-orange-50
+                      {% else %}border-yellow-200 has-checked:border-yellow-500 has-checked:bg-yellow-50{% endif %}">
+          <input type="radio" name="criticidad" value="{{ valor }}" class="sr-only">
+          <span class="block text-xl font-bold">{{ etiqueta }}</span>
+          <span class="block text-slate-600">{{ ayuda }}</span>
+        </label>
+      {% endfor %}
+    </fieldset>
+
+    <button type="submit" class="w-full rounded-xl bg-red-600 px-6 py-5 text-xl font-bold text-white">Enviar reporte</button>
+    <button type="button" data-descartar class="w-full rounded-xl bg-slate-200 px-6 py-3 text-lg font-semibold">Descartar y volver</button>
+  </form>
+{% endblock %}

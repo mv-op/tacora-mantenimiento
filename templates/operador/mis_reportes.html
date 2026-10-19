@@ -1,0 +1,28 @@
+{% extends "operador/_base_operador.html" %}
+{% block titulo %}Mis reportes · Mantenimiento{% endblock %}
+
+{% block paso %}
+  <div class="flex items-center justify-between gap-3">
+    <h1 class="text-2xl font-bold">Mis reportes</h1>
+    <a href="{% url 'reportar' %}" class="rounded-xl bg-red-600 px-5 py-3 text-lg font-semibold text-white">+ Nuevo reporte</a>
+  </div>
+
+  {# Lo llena reportes.js con los reportes guardados en este equipo que esperan conexión. #}
+  <div data-pendientes class="mt-4"></div>
+
+  <div class="mt-4 space-y-3">
+    {% for ticket in tickets %}
+      <a href="{% url 'mi_reporte' ticket.pk %}" class="block rounded-2xl bg-white p-4 shadow">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="font-bold">#{{ ticket.pk }}</span>
+          {% include "operador/_criticidad.html" %}
+          {% include "operador/_estado.html" %}
+        </div>
+        <div class="mt-2 text-lg font-semibold">{{ ticket.nodo.ruta }}</div>
+        <div class="text-sm text-slate-500">{{ ticket.reportado_en|date:"j M Y, H:i" }}</div>
+      </a>
+    {% empty %}
+      <p class="rounded-2xl bg-white p-6 text-center text-slate-500 shadow">Aún no ha enviado reportes.</p>
+    {% endfor %}
+  </div>
+{% endblock %}

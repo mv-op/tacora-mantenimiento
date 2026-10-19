@@ -3,3 +3,13 @@
 /* Dónde buscar las clases de Tailwind */
 @source "../../templates";
 @source "../../apps";
+
+/* Al cambiar de nivel en el mosaico, la pantalla aparece con un movimiento corto para que se note. */
+@keyframes aparecer {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+#paso { animation: aparecer 0.25s ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  #paso { animation: none; }
+}

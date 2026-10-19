@@ -1,0 +1,29 @@
+{% load niveles %}
+<div id="sugerencias" class="space-y-3">
+  {% if sugerencias %}
+    <div class="rounded-xl bg-amber-50 p-4">
+      <p class="font-semibold text-amber-900">Ya existe aquí. ¿Es alguno de estos? Tóquelo para usarlo:</p>
+      <div class="mt-3 flex flex-col gap-2">
+        {% for sugerido in sugerencias %}
+          <a href="{% url 'reportar_nodo' sugerido.pk %}" hx-target="#paso" hx-select="#paso" hx-swap="outerHTML show:window:top"
+             class="rounded-xl px-4 py-3 text-lg font-semibold shadow {{ sugerido.nivel|estilo_nivel:'boton' }}">{{ sugerido.nombre }}</a>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  {% if usados %}
+    <div class="rounded-xl bg-slate-50 p-4">
+      <p class="font-semibold text-slate-700">Nombres usados en otras partes. Tóquelo para escribirlo igual:</p>
+      <div class="mt-3 flex flex-wrap gap-2">
+        {% for nombre_usado, veces in usados %}
+          <button type="button" data-nombre="{{ nombre_usado }}"
+                  onclick="const campo = this.closest('form').elements.nombre; campo.value = this.dataset.nombre; campo.focus();"
+                  class="rounded-xl px-4 py-3 text-lg font-semibold shadow {{ nivel|estilo_nivel:'suave' }}">
+            {{ nombre_usado }}{% if veces > 1 %} <span class="text-sm opacity-70">({{ veces }})</span>{% endif %}
+          </button>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+</div>

@@ -1,0 +1,9 @@
+{% load niveles %}
+{# Barra de 5 pasos: Máquina → Unidad → Sistema → Equipo → Componente. #}
+<div class="mb-3 flex gap-1.5" aria-hidden="true">
+  {% for nivel, estado in pasos %}
+    <div class="h-2.5 flex-1 rounded-full
+                {% if estado == 'pendiente' %}bg-slate-300{% else %}{{ nivel|estilo_nivel:'chip' }}{% endif %}
+                {% if estado == 'actual' %}ring-2 ring-slate-900 ring-offset-2{% endif %}"></div>
+  {% endfor %}
+</div>

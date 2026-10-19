@@ -1,0 +1,67 @@
+{% extends "admin/base_site.html" %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">Inicio</a> ›
+  <a href="{% url 'admin:activos_nodoactivo_changelist' %}">Nodos de activos</a> › Fusionar
+</div>
+{% endblock %}
+
+{% block content %}
+<style>
+  .fusion { max-width: 900px; }
+  .tarjetas { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); margin: 1em 0; }
+  .tarjeta { display: block; cursor: pointer; border: 3px solid #ddd; border-radius: 10px; padding: 14px 16px; }
+  .tarjeta:has(input:checked) { border-color: #2e7d32; background: #eef8ef; }
+  .tarjeta input { margin-right: 6px; }
+  .tarjeta .nombre { font-size: 1.2em; font-weight: bold; }
+  .tarjeta .ruta { color: #666; margin: 4px 0 8px; }
+  .etiqueta { display: inline-block; border-radius: 4px; padding: 1px 6px; font-size: 0.85em; background: #eee; margin: 2px 2px 0 0; }
+  .etiqueta.pendiente { background: #fff1c2; color: #6b4e00; }
+  .caja-aviso { background: #fff7e0; color: #6b4e00; padding: 12px 16px; border-radius: 6px; }
+  .boton-grande { font-size: 1.1em; padding: 12px 24px !important; }
+</style>
+
+<div class="fusion">
+  <p>Toque el nodo <strong>correcto</strong>. Los demás se fusionarán en él:</p>
+  <ul>
+    <li>Sus tickets y sus hijos pasan al nodo correcto (los hijos con el mismo nombre también se fusionan).</li>
+    <li>Quedan inactivos, con la marca «fusionado en», y todo queda en el historial. No se borra nada.</li>
+  </ul>
+
+  <form method="post" class="con-envio">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="{{ accion }}">
+    {% for pk in seleccionados %}<input type="hidden" name="_selected_action" value="{{ pk }}">{% endfor %}
+
+    <div class="tarjetas">
+      {% for nodo in nodos %}
+        <label class="tarjeta">
+          <div class="nombre"><input type="radio" name="correcto" value="{{ nodo.pk }}" required>{{ nodo.nombre }}</div>
+          <div class="ruta">{{ nodo.ruta }}</div>
+          <span class="etiqueta">{{ nodo.num_tickets }} tickets</span>
+          <span class="etiqueta">{{ nodo.num_hijos }} hijos</span>
+          <span class="etiqueta">{{ nodo.get_origen_display }}</span>
+          <span class="etiqueta {% if nodo.estado_curaduria == 'pendiente' %}pendiente{% endif %}">{{ nodo.get_estado_curaduria_display }}</span>
+        </label>
+      {% endfor %}
+    </div>
+
+    <p class="caja-aviso">Revise bien antes de confirmar: la fusión mueve los tickets de un activo a otro.</p>
+    <button type="submit" class="button default boton-grande">Fusionar en el nodo elegido</button>
+    <a href="{% url 'admin:activos_nodoactivo_changelist' %}" class="button boton-grande">Cancelar</a>
+  </form>
+</div>
+
+<script>
+  // El botón de envío se bloquea al primer clic y muestra "Enviando…".
+  document.querySelectorAll("form.con-envio").forEach(function (formulario) {
+    formulario.addEventListener("submit", function (e) {
+      const boton = formulario.querySelector("[type=submit]");
+      if (boton.disabled) { e.preventDefault(); return; }
+      boton.textContent = "Enviando…";
+      setTimeout(function () { boton.disabled = true; }, 0);
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "operador/_base_operador.html" %}
+{% load niveles %}
+{% block titulo %}Crear {{ nivel.label|lower }} · Mantenimiento{% endblock %}
+
+{% block paso %}
+  {% include "operador/_pasos.html" %}
+  {% with enlazar_ultimo=True %}{% include "operador/_ruta.html" %}{% endwith %}
+
+  <div class="rounded-2xl p-4 shadow {{ nivel|estilo_nivel:'banda' }}">
+    <div class="text-sm font-semibold uppercase tracking-wide opacity-90">Paso {{ nivel }} de 5 · {{ nivel.label }}</div>
+    <div class="text-2xl font-bold">Crear {{ nivel.label|lower }} nuevo{% if padre %} en «{{ padre.nombre }}»{% endif %}</div>
+  </div>
+
+  <div class="mt-3 rounded-2xl bg-white p-6 shadow">
+    <p class="text-slate-600">Úselo solo si no aparece en la lista. El administrador lo revisará.</p>
+
+    {% if error %}<div class="mt-4 rounded-xl bg-red-100 p-4 text-red-800">{{ error }}</div>{% endif %}
+
+    <form method="post" action="{% url 'crear_nodo' %}" class="mt-4 space-y-4" autocomplete="off">
+      {% csrf_token %}
+      {% if padre %}<input type="hidden" name="padre" value="{{ padre.pk }}">{% endif %}
+      <label class="block">
+        <span class="text-lg font-semibold">Nombre</span>
+        <input name="nombre" value="{{ nombre }}" required maxlength="200" autofocus
+               hx-get="{% url 'sugerencias' %}" hx-trigger="input changed delay:300ms" hx-include="closest form"
+               hx-target="#sugerencias" hx-select="#sugerencias" hx-swap="outerHTML" hx-push-url="false"
+               class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-4 text-lg">
+      </label>
+      {% include "operador/_sugerencias.html" %}
+      <button type="submit" class="w-full rounded-xl bg-blue-600 px-6 py-4 text-lg font-semibold text-white">Crear y continuar</button>
+    </form>
+  </div>
+{% endblock %}

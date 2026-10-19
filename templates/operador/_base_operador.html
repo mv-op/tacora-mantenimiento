@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{# hx-boost: los enlaces y formularios cargan la página por detrás y solo cambian #paso (sin recargar). #}
+{% block mensajes %}{% endblock %}
+{% block contenido %}
+  <div hx-boost="true" hx-target="#paso" hx-select="#paso" hx-swap="outerHTML show:window:top">
+    <div id="paso">
+      {% include "_mensajes.html" %}
+      {% block paso %}{% endblock %}
+    </div>
+  </div>
+{% endblock %}

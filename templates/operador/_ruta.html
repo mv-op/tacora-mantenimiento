@@ -1,0 +1,12 @@
+{% load niveles %}
+<nav class="mb-4 flex flex-wrap items-center gap-2 text-base">
+  <a href="{% url 'reportar' %}" class="rounded-lg bg-white px-3 py-2 font-semibold shadow">Máquinas</a>
+  {% for paso in ancestros %}
+    <span class="text-slate-400">›</span>
+    {% if forloop.last and not enlazar_ultimo %}
+      <span class="rounded-lg px-3 py-2 font-semibold ring-2 ring-slate-900 {{ paso.nivel|estilo_nivel:'chip' }}">{{ paso.nombre }}</span>
+    {% else %}
+      <a href="{% url 'reportar_nodo' paso.pk %}" class="rounded-lg px-3 py-2 font-semibold shadow {{ paso.nivel|estilo_nivel:'chip' }}">{{ paso.nombre }}</a>
+    {% endif %}
+  {% endfor %}
+</nav>

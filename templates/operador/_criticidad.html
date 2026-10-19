@@ -1,0 +1,4 @@
+<span class="rounded-full px-3 py-1 text-sm font-semibold
+  {% if ticket.criticidad == 'critica' %}bg-red-600 text-white
+  {% elif ticket.criticidad == 'urgente' %}bg-orange-500 text-white
+  {% else %}bg-yellow-300 text-yellow-900{% endif %}">{{ ticket.get_criticidad_display }}</span>
