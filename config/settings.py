@@ -39,6 +39,10 @@ INSTALLED_APPS = [
     "simple_history",
     "apps.usuarios",
     "apps.core",
+    "apps.activos",
+    "apps.tickets",
+    "apps.notificaciones",
+    "apps.agente",
 ]
 
 MIDDLEWARE = [
