@@ -1,0 +1,5 @@
+@import "tailwindcss";
+
+/* Dónde buscar las clases de Tailwind */
+@source "../../templates";
+@source "../../apps";

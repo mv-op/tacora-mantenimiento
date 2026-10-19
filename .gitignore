@@ -1,0 +1,16 @@
+# Secretos
+.env
+
+# Entorno y caché de Python
+.venv/
+__pycache__/
+*.pyc
+
+# Base de datos (vive fuera del código, por si acaso)
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+
+# Estáticos recolectados y ejecutable de Tailwind
+staticfiles/
+bin/

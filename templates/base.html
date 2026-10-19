@@ -1,0 +1,58 @@
+{% load static %}<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}Mantenimiento{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <script src="{% static 'vendor/htmx.min.js' %}" defer></script>
+</head>
+<body class="min-h-screen bg-slate-100 text-slate-900" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+  <header class="sticky top-0 z-10 flex items-center justify-between gap-4 bg-slate-900 px-4 py-3 text-white">
+    <div id="reloj" class="text-4xl font-bold tabular-nums" data-epoch-ms="{% now 'U' %}000">{% now "H:i" %}</div>
+    <div class="text-right text-sm">
+      {% if user.is_authenticated %}
+        <div class="font-semibold">{{ user.get_full_name|default:user.username }}</div>
+      {% endif %}
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-3xl p-4">
+    {% block contenido %}{% endblock %}
+  </main>
+
+  <script>
+    // Reloj en hora Bogotá: arranca con la hora del servidor y el navegador solo la avanza.
+    (function () {
+      const reloj = document.getElementById("reloj");
+      const desfase = Number(reloj.dataset.epochMs) - Date.now();
+      const formato = new Intl.DateTimeFormat("es-CO", {
+        timeZone: "America/Bogota", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+      });
+      function pintar() { reloj.textContent = formato.format(new Date(Date.now() + desfase)); }
+      pintar();
+      setInterval(pintar, 1000);
+    })();
+
+    // Todo botón de envío se bloquea al primer clic y muestra "Enviando…".
+    document.addEventListener("submit", function (e) {
+      const boton = e.submitter || e.target.querySelector("[type=submit]");
+      if (!boton) return;
+      if (boton.dataset.enviando) { e.preventDefault(); return; }
+      boton.dataset.enviando = "1";
+      boton.dataset.textoOriginal = boton.textContent;
+      boton.textContent = "Enviando…";
+      // Se deshabilita después del envío para que el formulario incluya el valor del botón.
+      setTimeout(function () { boton.disabled = true; }, 0);
+    });
+    // Si la petición HTMX termina, el botón vuelve a su estado normal.
+    document.addEventListener("htmx:afterRequest", function (e) {
+      e.target.querySelectorAll("[data-enviando]").forEach(function (boton) {
+        boton.disabled = false;
+        boton.textContent = boton.dataset.textoOriginal;
+        delete boton.dataset.enviando;
+      });
+    });
+  </script>
+</body>
+</html>
