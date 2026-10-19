@@ -5,37 +5,45 @@
   <a href="{% url 'orden' ticket.pk %}" class="mb-4 inline-block rounded-lg bg-white px-3 py-2 font-semibold shadow">‹ Volver a la orden</a>
 
   {% if rechazo %}
-    <div class="mb-4 rounded-2xl bg-red-100 p-4 text-red-900">
-      <div class="font-bold">Motivo del rechazo anterior</div>
+    <div class="mb-4 rounded-2xl border-l-8 border-rose-600 bg-rose-50 p-4 text-rose-900">
+      <div class="text-xs font-bold uppercase tracking-wider">Motivo del rechazo anterior</div>
       <div class="whitespace-pre-line">{{ rechazo.comentario }}</div>
     </div>
   {% endif %}
 
-  <form method="post" class="space-y-5 rounded-2xl bg-white p-6 shadow">
+  <form method="post" class="overflow-hidden rounded-2xl bg-white shadow">
     {% csrf_token %}
-    <h1 class="text-2xl font-bold">Cierre técnico · orden #{{ ticket.pk }}</h1>
-    <p class="text-slate-600">{{ ticket.nodo.ruta }} · Puede dictar con el micrófono del teclado.</p>
+    <div class="bg-teal-600 px-5 py-4 text-white">
+      <div class="text-xs font-semibold uppercase tracking-wider opacity-90">Cierre técnico · orden #{{ ticket.pk }}</div>
+      <h1 class="text-2xl font-bold">{{ ticket.nodo.nombre }}</h1>
+      <p class="text-sm opacity-90">Puede dictar con el micrófono del teclado.</p>
+    </div>
 
-    <label class="block">
-      <span class="text-lg font-semibold">Causa raíz</span>
-      <span class="block text-sm text-slate-500">¿Por qué falló? Mínimo {{ minimo }} caracteres.</span>
-      <textarea name="causa_raiz" rows="3" required class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-lg">{{ cierre.causa_raiz }}</textarea>
-    </label>
-    <label class="block">
-      <span class="text-lg font-semibold">Acción correctiva</span>
-      <span class="block text-sm text-slate-500">¿Qué hizo para arreglarlo? Mínimo {{ minimo }} caracteres.</span>
-      <textarea name="accion_correctiva" rows="3" required class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-lg">{{ cierre.accion_correctiva }}</textarea>
-    </label>
-    <label class="block">
-      <span class="text-lg font-semibold">Repuestos usados <span class="font-normal text-slate-500">(opcional)</span></span>
-      <textarea name="repuestos" rows="2" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-lg">{{ cierre.repuestos }}</textarea>
-    </label>
-    <label class="block">
-      <span class="text-lg font-semibold">Recomendación preventiva</span>
-      <span class="block text-sm text-slate-500">¿Qué hacer para que no vuelva a pasar? Mínimo {{ minimo }} caracteres.</span>
-      <textarea name="recomendacion_preventiva" rows="3" required class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-lg">{{ cierre.recomendacion_preventiva }}</textarea>
-    </label>
+    <div class="space-y-6 p-5">
+      <label class="block">
+        <span class="flex items-center gap-2 text-lg font-semibold"><span class="rounded-full bg-teal-600 px-2.5 text-sm text-white">1</span> Causa raíz</span>
+        <span class="block text-sm text-slate-500">¿Por qué falló?</span>
+        <textarea name="causa_raiz" rows="3" required data-minimo="{{ minimo }}"
+                  class="mt-2 w-full rounded-xl border-2 border-slate-300 px-4 py-3 text-lg">{{ cierre.causa_raiz }}</textarea>
+      </label>
+      <label class="block">
+        <span class="flex items-center gap-2 text-lg font-semibold"><span class="rounded-full bg-teal-600 px-2.5 text-sm text-white">2</span> Acción correctiva</span>
+        <span class="block text-sm text-slate-500">¿Qué hizo para arreglarlo?</span>
+        <textarea name="accion_correctiva" rows="3" required data-minimo="{{ minimo }}"
+                  class="mt-2 w-full rounded-xl border-2 border-slate-300 px-4 py-3 text-lg">{{ cierre.accion_correctiva }}</textarea>
+      </label>
+      <label class="block">
+        <span class="flex items-center gap-2 text-lg font-semibold"><span class="rounded-full bg-teal-600 px-2.5 text-sm text-white">3</span> Recomendación preventiva</span>
+        <span class="block text-sm text-slate-500">¿Qué hacer para que no vuelva a pasar?</span>
+        <textarea name="recomendacion_preventiva" rows="3" required data-minimo="{{ minimo }}"
+                  class="mt-2 w-full rounded-xl border-2 border-slate-300 px-4 py-3 text-lg">{{ cierre.recomendacion_preventiva }}</textarea>
+      </label>
+      <label class="block">
+        <span class="text-lg font-semibold">Repuestos usados <span class="text-sm font-normal text-slate-500">(opcional)</span></span>
+        <textarea name="repuestos" rows="2" class="mt-2 w-full rounded-xl border-2 border-slate-300 px-4 py-3 text-lg">{{ cierre.repuestos }}</textarea>
+      </label>
 
-    <button type="submit" class="w-full rounded-xl bg-teal-600 px-6 py-5 text-xl font-bold text-white">Enviar cierre</button>
+      <button type="submit" class="w-full rounded-xl bg-teal-600 px-6 py-5 text-xl font-bold text-white">✓ Enviar cierre</button>
+    </div>
   </form>
 {% endblock %}

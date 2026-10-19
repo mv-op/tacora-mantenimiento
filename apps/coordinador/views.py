@@ -34,11 +34,20 @@ def bandeja(request):
     maquinas = maquinas_de(request.user)
     abiertos = con_semaforo(tickets_de_maquinas(maquinas).exclude(estado__in=[Estado.CERRADO, Estado.ANULADO])
                             .select_related("nodo", "tecnico"))
+    # Columnas del tablero, en el orden en que el coordinador debe atenderlas. Clases completas para Tailwind.
     secciones = [
-        ("Por asignar", "Toque un reporte para asignarle un técnico.", [t for t in abiertos if t.estado == Estado.REPORTADO]),
-        ("Contra-reportes", "El técnico pausó el trabajo y espera su respuesta.", [t for t in abiertos if t.estado == Estado.EN_PAUSA]),
-        ("Por validar", "El técnico terminó. Revise el cierre y valide o rechace.", [t for t in abiertos if t.estado == Estado.RESUELTO]),
-        ("En curso", "", [t for t in abiertos if t.estado in (Estado.ASIGNADO, Estado.EN_PROCESO)]),
+        {"clave": "por-asignar", "titulo": "Por asignar", "ayuda": "Elija un técnico.",
+         "cabecera": "bg-blue-600 text-white", "salto": "bg-blue-100 text-blue-800",
+         "tickets": [t for t in abiertos if t.estado == Estado.REPORTADO]},
+        {"clave": "contra-reportes", "titulo": "Contra-reportes", "ayuda": "El técnico espera su respuesta.",
+         "cabecera": "bg-orange-500 text-white", "salto": "bg-orange-100 text-orange-800",
+         "tickets": [t for t in abiertos if t.estado == Estado.EN_PAUSA]},
+        {"clave": "por-validar", "titulo": "Por validar", "ayuda": "Revise el cierre: valide o rechace.",
+         "cabecera": "bg-teal-600 text-white", "salto": "bg-teal-100 text-teal-800",
+         "tickets": [t for t in abiertos if t.estado == Estado.RESUELTO]},
+        {"clave": "en-curso", "titulo": "En curso", "ayuda": "Asignados o en trabajo.", "mostrar_estado": True,
+         "cabecera": "bg-indigo-600 text-white", "salto": "bg-indigo-100 text-indigo-800",
+         "tickets": [t for t in abiertos if t.estado in (Estado.ASIGNADO, Estado.EN_PROCESO)]},
     ]
     return render(request, "coordinador/bandeja.html", {
         "maquinas": maquinas, "secciones": secciones, "tecnicos": tecnicos_con_carga(),
@@ -98,7 +107,7 @@ def ajustar_sla(request):
                 messages.error(request, str(error))
             else:
                 if cambio:
-                    messages.success(request, f"SLA actualizado: {regla}.")
+                    messages.success(request, f"Plazos actualizados: {regla}.")
                 else:
                     messages.info(request, "No hubo cambios.")
         return redirect("ajustar_sla")

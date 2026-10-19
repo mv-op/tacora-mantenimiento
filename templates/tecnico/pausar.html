@@ -4,17 +4,22 @@
 {% block paso %}
   <a href="{% url 'orden' ticket.pk %}" class="mb-4 inline-block rounded-lg bg-white px-3 py-2 font-semibold shadow">‹ Volver a la orden</a>
 
-  <form method="post" class="space-y-4 rounded-2xl bg-white p-6 shadow">
+  <form method="post" class="overflow-hidden rounded-2xl bg-white shadow">
     {% csrf_token %}
-    <h1 class="text-2xl font-bold">Pausar la orden #{{ ticket.pk }}</h1>
-    <p class="text-slate-600">{{ ticket.nodo.ruta }}</p>
-    <label class="block">
-      <span class="text-lg font-semibold">¿Por qué se detiene el trabajo?</span>
-      <textarea name="motivo" rows="4" required
-                placeholder="Ej.: Falta el rodamiento 6205 en bodega. Necesito que lo compren."
-                class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-lg">{{ motivo }}</textarea>
-      <span class="mt-1 block text-sm text-slate-500">Mínimo {{ minimo }} caracteres. El coordinador recibirá este contra-reporte.</span>
-    </label>
-    <button type="submit" class="w-full rounded-xl bg-orange-500 px-6 py-5 text-xl font-bold text-white">Pausar y enviar contra-reporte</button>
+    <div class="bg-orange-500 px-5 py-4 text-white">
+      <div class="text-xs font-semibold uppercase tracking-wider opacity-90">Contra-reporte · orden #{{ ticket.pk }}</div>
+      <h1 class="text-2xl font-bold">Pausar el trabajo</h1>
+      <p class="text-sm opacity-90">{{ ticket.nodo.ruta }}</p>
+    </div>
+    <div class="space-y-4 p-5">
+      <label class="block">
+        <span class="text-lg font-semibold">¿Por qué se detiene el trabajo?</span>
+        <span class="block text-sm text-slate-500">El coordinador recibirá este mensaje y le responderá.</span>
+        <textarea name="motivo" rows="4" required data-minimo="{{ minimo }}"
+                  placeholder="Ej.: Falta el rodamiento 6205 en bodega. Necesito que lo compren."
+                  class="mt-2 w-full rounded-xl border-2 border-slate-300 px-4 py-3 text-lg">{{ motivo }}</textarea>
+      </label>
+      <button type="submit" class="w-full rounded-xl bg-orange-500 px-6 py-5 text-xl font-bold text-white">⏸ Pausar y enviar</button>
+    </div>
   </form>
 {% endblock %}

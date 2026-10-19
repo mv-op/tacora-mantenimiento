@@ -1,10 +1,11 @@
 {% extends "_base_app.html" %}
-{% block titulo %}Ajustar SLA · Mantenimiento{% endblock %}
+{% block titulo %}Plazos · Mantenimiento{% endblock %}
 
 {% block paso %}
   <a href="{% url 'bandeja' %}" class="mb-4 inline-block rounded-lg bg-white px-3 py-2 font-semibold shadow">‹ Bandeja</a>
-  <h1 class="text-2xl font-bold">Tiempos de SLA</h1>
-  <p class="mt-1 text-slate-600">Aplican a todos los reportes abiertos de esa criticidad. Cada cambio queda registrado.</p>
+  <h1 class="text-2xl font-bold">Plazos de atención</h1>
+  <p class="mt-1 text-slate-600">Cuánto tiempo hay para asignar un técnico y para resolver cada reporte, según su criticidad.
+    El semáforo se pone amarillo al 70 % del plazo y rojo cuando se vence. Aplica a todos los reportes abiertos y cada cambio queda registrado.</p>
 
   <div class="mt-4 space-y-4">
     {% for regla in reglas %}
@@ -14,7 +15,7 @@
         {% with ticket=regla %}{% include "operador/_criticidad.html" %}{% endwith %}
         <div class="mt-3 grid gap-4 sm:grid-cols-2">
           <fieldset>
-            <legend class="font-semibold">Asignar antes de</legend>
+            <legend class="font-semibold">Plazo para asignar técnico</legend>
             <div class="mt-1 flex items-center gap-2">
               <input name="asignar_horas" value="{{ regla.asignar.0 }}" inputmode="numeric" pattern="[0-9]*" required
                      class="w-20 rounded-xl border border-slate-300 px-3 py-3 text-center text-lg"> h
@@ -23,7 +24,7 @@
             </div>
           </fieldset>
           <fieldset>
-            <legend class="font-semibold">Resolver antes de</legend>
+            <legend class="font-semibold">Plazo para resolver</legend>
             <div class="mt-1 flex items-center gap-2">
               <input name="resolver_horas" value="{{ regla.resolver.0 }}" inputmode="numeric" pattern="[0-9]*" required
                      class="w-20 rounded-xl border border-slate-300 px-3 py-3 text-center text-lg"> h

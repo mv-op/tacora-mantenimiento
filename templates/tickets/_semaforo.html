@@ -1,16 +1,22 @@
 {% load tickets %}
-{# Semáforo de SLA. cronometro.js actualiza el texto y el color cada pocos segundos. #}
+{# Semáforo del plazo. `compacto`: etiqueta pequeña para tarjetas. cronometro.js actualiza texto y color. #}
 {% if s %}
-  <div class="rounded-xl px-3 py-2 text-sm font-semibold
-              {% if s.color == 'rojo' %}bg-red-600 text-white{% elif s.color == 'amarillo' %}bg-yellow-200 text-yellow-900{% else %}bg-green-100 text-green-800{% endif %}"
-       data-cronometro data-inicio="{{ s.inicio|epoch_ms }}" data-limite="{{ s.limite|epoch_ms }}"
-       {% if s.congelado %}data-congelado="{{ s.medido_en|epoch_ms }}"{% endif %}>
-    <span class="font-normal">{{ s.etiqueta }} {{ s.limite|date:"H:i" }}{% if s.limite|date:"Ymd" != s.medido_en|date:"Ymd" %} del {{ s.limite|date:"j M" }}{% endif %} ·</span>
-    <span data-texto>
-      {% if s.congelado %}
-        {% if s.restante.total_seconds >= 0 %}Resuelto a tiempo{% else %}Resuelto con {{ s.restante|duracion }} de retraso{% endif %}
-      {% elif s.restante.total_seconds >= 0 %}Quedan {{ s.restante|duracion }}
-      {% else %}Vencido hace {{ s.restante|duracion }}{% endif %}
+  {% if compacto %}
+    <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold
+                 {% if s.color == 'rojo' %}bg-red-600 text-white{% elif s.color == 'amarillo' %}bg-yellow-200 text-yellow-900{% else %}bg-green-100 text-green-800{% endif %}"
+          data-cronometro data-inicio="{{ s.inicio|epoch_ms }}" data-limite="{{ s.limite|epoch_ms }}"
+          {% if s.congelado %}data-congelado="{{ s.medido_en|epoch_ms }}"{% endif %}
+          title="{{ s.etiqueta }}: hasta las {{ s.limite|date:'H:i' }}">
+      ⏱ <span data-texto>{% include "tickets/_semaforo_texto.html" %}</span>
     </span>
-  </div>
+  {% else %}
+    <div class="rounded-xl px-4 py-3
+                {% if s.color == 'rojo' %}bg-red-600 text-white{% elif s.color == 'amarillo' %}bg-yellow-200 text-yellow-900{% else %}bg-green-100 text-green-800{% endif %}"
+         data-cronometro data-inicio="{{ s.inicio|epoch_ms }}" data-limite="{{ s.limite|epoch_ms }}"
+         {% if s.congelado %}data-congelado="{{ s.medido_en|epoch_ms }}"{% endif %}>
+      <div class="text-xs font-semibold uppercase tracking-wide opacity-80">{{ s.etiqueta }}</div>
+      <div class="text-xl font-bold">⏱ <span data-texto>{% include "tickets/_semaforo_texto.html" %}</span></div>
+      <div class="text-sm opacity-80">Hora límite: {{ s.limite|date:"H:i" }}{% if s.limite|date:"Ymd" != s.medido_en|date:"Ymd" %} del {{ s.limite|date:"j M" }}{% endif %}</div>
+    </div>
+  {% endif %}
 {% endif %}

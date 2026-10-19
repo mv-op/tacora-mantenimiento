@@ -147,5 +147,6 @@ def mi_reporte(request, pk):
     ticket = get_object_or_404(Ticket.objects.select_related("nodo", "tecnico"), pk=pk, reportado_por=request.user)
     return render(request, "operador/mi_reporte.html", {
         "ticket": ticket, "eventos": ticket.eventos.select_related("actor"),
+        "cierres": ticket.cierres.select_related("tecnico"),
         "recien_enviado": request.GET.get("enviado") == "1",
     })

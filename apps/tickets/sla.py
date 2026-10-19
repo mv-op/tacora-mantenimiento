@@ -45,7 +45,7 @@ class Semaforo:
 
     @property
     def etiqueta(self):
-        return "Asignar antes de" if self.meta == "asignar" else "Resolver antes de"
+        return "Plazo para asignar" if self.meta == "asignar" else "Plazo para resolver"
 
 
 def reglas_activas():

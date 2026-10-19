@@ -114,6 +114,11 @@ class NodoActivo(models.Model):
         return self.ancestros[0]
 
     @property
+    def ruta_padre(self):
+        """La ruta sin el propio nombre (para mostrarla pequeña debajo del nombre)."""
+        return " › ".join(n.nombre for n in self.ancestros[:-1])
+
+    @property
     def ruta(self):
         return " › ".join(n.nombre for n in self.ancestros)
 

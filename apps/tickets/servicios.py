@@ -9,6 +9,7 @@ from django.db import IntegrityError, transaction
 from django.utils import timezone
 
 from apps.activos.models import CoordinadorMaquina
+from apps.notificaciones.servicios import notificar_evento
 from apps.usuarios.models import Rol
 
 from .models import CierreTecnico, ContraReporte, Estado, EventoTicket, ReglaSLA, Ticket, TipoEvento
@@ -61,21 +62,21 @@ def crear_ticket(*, uuid_cliente, nodo, descripcion, criticidad, reportado_por):
                 uuid_cliente=uuid_cliente, nodo=nodo, descripcion=descripcion,
                 criticidad=criticidad, reportado_por=reportado_por,
             )
-            EventoTicket.objects.create(
+            evento = EventoTicket.objects.create(
                 ticket=ticket, tipo=TipoEvento.CREAR, estado_desde="", estado_hacia=Estado.REPORTADO,
                 actor=reportado_por, fecha=ticket.reportado_en,
             )
     except IntegrityError:
         # Dos envíos simultáneos del mismo reporte: el otro ya lo creó.
         return Ticket.objects.get(uuid_cliente=uuid_cliente), False
-    # Fase 6: notificar() al coordinador de la máquina.
+    notificar_evento(evento)
     return ticket, True
 
 
 def ajustar_sla(criticidad, minutos_para_asignar, minutos_para_resolver, usuario):
     """Cambia la regla SLA activa de una criticidad. El cambio queda en el historial con el usuario."""
     if usuario.rol not in (Rol.COORDINADOR, Rol.ADMIN):
-        raise TransicionInvalida("Su rol no permite ajustar el SLA.")
+        raise TransicionInvalida("Su rol no permite ajustar los plazos.")
     if minutos_para_asignar <= 0 or minutos_para_resolver <= 0:
         raise TransicionInvalida("Los tiempos deben ser mayores que cero.")
     if minutos_para_asignar >= minutos_para_resolver:
@@ -143,6 +144,7 @@ def transicionar(ticket, tipo, actor, *, comentario="", tecnico=None, cierre=Non
         ahora = timezone.now()
         regla = TRANSICIONES[tipo]
         estado_desde = ticket.estado
+        tecnico_anterior = ticket.tecnico
 
         if tipo in (TipoEvento.ASIGNAR, TipoEvento.REASIGNAR):
             if tecnico is None or tecnico.rol != Rol.TECNICO or not tecnico.is_active:
@@ -150,8 +152,7 @@ def transicionar(ticket, tipo, actor, *, comentario="", tecnico=None, cierre=Non
             if tipo == TipoEvento.REASIGNAR and tecnico.pk == ticket.tecnico_id:
                 raise TransicionInvalida("Ese técnico ya tiene el ticket.")
             if tipo == TipoEvento.REASIGNAR:
-                anterior = ticket.tecnico
-                comentario = comentario or f"De {anterior} a {tecnico}."
+                comentario = comentario or f"De {tecnico_anterior} a {tecnico}."
             ticket.tecnico = tecnico
             ticket.asignado_en = ticket.asignado_en or ahora
 
@@ -203,5 +204,5 @@ def transicionar(ticket, tipo, actor, *, comentario="", tecnico=None, cierre=Non
             ticket=ticket, tipo=tipo, estado_desde=estado_desde, estado_hacia=ticket.estado,
             actor=actor, comentario=comentario, fecha=ahora,
         )
-    # Fase 6: notificar() según la matriz del plan.
+    notificar_evento(evento, tecnico_anterior=tecnico_anterior)
     return ticket, evento

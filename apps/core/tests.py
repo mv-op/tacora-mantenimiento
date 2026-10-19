@@ -37,10 +37,10 @@ class MenuTests(TestCase):
     def test_menu_del_coordinador_y_opcion_resaltada(self):
         self.entrar(Rol.COORDINADOR)
         r = self.client.get("/sla/")
-        for etiqueta in ("Bandeja", "Máquinas", "SLA", "Reportar", "Cuenta"):
+        for etiqueta in ("Bandeja", "Máquinas", "Plazos", "Reportar", "Cuenta"):
             self.assertContains(r, f"{etiqueta}\n")
         activas = [opcion.etiqueta for opcion, activa in r.context["menu"] if activa]
-        self.assertEqual(activas, ["SLA"])
+        self.assertEqual(activas, ["Plazos"])
 
     def test_menu_del_operador_no_muestra_bandeja(self):
         self.entrar(Rol.OPERADOR)

@@ -19,9 +19,9 @@
 
     <label class="block">
       <span class="text-lg font-semibold">¿Qué está pasando?</span>
-      <textarea name="descripcion" rows="5" required
+      <textarea name="descripcion" rows="5" required data-minimo="{{ minimo }}" data-sin-contador
                 placeholder="Ej.: La bomba hace un ruido fuerte desde esta mañana y gotea aceite."
-                class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-lg"></textarea>
+                class="mt-1 w-full rounded-xl border-2 border-slate-300 px-4 py-3 text-lg"></textarea>
       <span class="mt-1 block text-sm text-slate-500">
         <span data-contador>0</span> / {{ minimo }} caracteres mínimo · Puede dictar con el micrófono del teclado.
       </span>

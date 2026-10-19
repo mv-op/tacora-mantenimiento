@@ -1,0 +1,51 @@
+{% load tickets %}
+{# Ficha del ticket por bloques: activo, qué pasó, datos y plazo. Recibe ticket; opcionales: s (semáforo), pausa. #}
+<article class="overflow-hidden rounded-2xl bg-white shadow">
+  <div class="h-2 {% if ticket.criticidad == 'critica' %}bg-red-600{% elif ticket.criticidad == 'urgente' %}bg-orange-500{% else %}bg-yellow-400{% endif %}"></div>
+  <div class="p-5">
+    <div class="flex flex-wrap items-center gap-2">
+      {% include "operador/_criticidad.html" %}
+      {% include "operador/_estado.html" %}
+      <span class="ml-auto text-sm font-semibold text-slate-500">Ticket #{{ ticket.pk }}</span>
+    </div>
+
+    <h1 class="mt-3 text-2xl font-bold leading-tight">{{ ticket.nodo.nombre }}</h1>
+    <p class="text-sm text-slate-500">{{ ticket.nodo.get_nivel_display }}{% if ticket.nodo.ruta_padre %} · {{ ticket.nodo.ruta_padre }}{% endif %}</p>
+
+    <h2 class="mt-5 text-xs font-bold uppercase tracking-wider text-slate-500">Qué pasó</h2>
+    <p class="mt-1 whitespace-pre-line rounded-xl bg-slate-50 p-3 text-slate-800">{{ ticket.descripcion }}</p>
+
+    <h2 class="mt-5 text-xs font-bold uppercase tracking-wider text-slate-500">Datos</h2>
+    <dl class="mt-1 grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <div class="rounded-xl bg-slate-50 p-3">
+        <dt class="text-xs text-slate-500">Reportó</dt>
+        <dd class="font-semibold">{{ ticket.reportado_por }}</dd>
+      </div>
+      <div class="rounded-xl bg-slate-50 p-3">
+        <dt class="text-xs text-slate-500">Reportado</dt>
+        <dd class="font-semibold">{{ ticket.reportado_en|date:"j M, H:i" }}</dd>
+      </div>
+      <div class="rounded-xl bg-slate-50 p-3">
+        <dt class="text-xs text-slate-500">Técnico</dt>
+        <dd class="font-semibold">{% if ticket.tecnico %}👷 {{ ticket.tecnico }}{% else %}Sin asignar{% endif %}</dd>
+      </div>
+      {% if ticket.iniciado_en %}
+        <div class="rounded-xl bg-slate-50 p-3">
+          <dt class="text-xs text-slate-500">Trabajando desde</dt>
+          <dd class="font-semibold">{{ ticket.iniciado_en|date:"j M, H:i" }}</dd>
+        </div>
+      {% endif %}
+      {% if pausa and pausa.total_seconds %}
+        <div class="rounded-xl bg-orange-50 p-3">
+          <dt class="text-xs text-orange-700">Tiempo en pausa</dt>
+          <dd class="font-semibold text-orange-900">{{ pausa|duracion }}</dd>
+        </div>
+      {% endif %}
+    </dl>
+
+    {% if s %}
+      <h2 class="mt-5 text-xs font-bold uppercase tracking-wider text-slate-500">Plazo</h2>
+      <div class="mt-1">{% include "tickets/_semaforo.html" %}</div>
+    {% endif %}
+  </div>
+</article>

@@ -9,7 +9,8 @@
   <script src="{% static 'vendor/htmx.min.js' %}" defer></script>
 </head>
 <body class="min-h-screen bg-slate-100 text-slate-900" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-      {% if user.is_authenticated %}data-usuario="{{ user.pk }}" data-url-enviar="{% url 'enviar_reporte' %}"{% endif %}>
+      {% if user.is_authenticated %}data-usuario="{{ user.pk }}" data-url-enviar="{% url 'enviar_reporte' %}"
+      data-url-notificaciones="{% url 'notificaciones_estado' %}" data-notif-ultima="{{ campana_ultima }}"{% endif %}>
   {# Encabezado y menú fijos arriba (en el celular el menú se va abajo). #}
   <div class="sticky top-0 z-10">
   <header class="flex items-center justify-between gap-3 bg-slate-900 px-4 py-3 text-white">
@@ -20,12 +21,13 @@
           <div class="font-semibold">{{ user }}</div>
           <div class="text-sm text-slate-300">{{ user.get_rol_display }}</div>
         </div>
-        <button type="button" disabled title="Notificaciones (disponible en la Fase 6)"
-                class="relative rounded-xl bg-slate-800 p-3 text-slate-300">
+        <a href="{% url 'notificaciones' %}" title="Notificaciones" class="relative rounded-xl bg-slate-800 p-3 text-white">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5m6 0a3 3 0 1 1-6 0m6 0H9"/>
           </svg>
-        </button>
+          <span id="campana-contador" {% if not campana_sin_leer %}hidden{% endif %}
+                class="absolute -right-1.5 -top-1.5 min-w-6 rounded-full bg-red-600 px-1.5 text-center text-sm font-bold leading-6">{{ campana_sin_leer }}</span>
+        </a>
         <form method="post" action="{% url 'salir' %}">
           {% csrf_token %}
           <button type="submit" class="rounded-xl bg-slate-700 px-4 py-3 font-semibold">Salir</button>
@@ -36,10 +38,19 @@
   {% include "_menu.html" %}
   </div>
 
-  <main class="mx-auto max-w-3xl p-4 {% if menu %}pb-24 sm:pb-4{% endif %}">
+  <main class="mx-auto {% block ancho %}max-w-3xl{% endblock %} p-4 {% if menu %}pb-24 sm:pb-4{% endif %}">
     {% block mensajes %}{% include "_mensajes.html" %}{% endblock %}
     {% block contenido %}{% endblock %}
   </main>
+
+  {# Avisos emergentes de notificaciones (los de prioridad alta quedan fijos hasta tocar «Visto»). #}
+  <div id="avisos" class="fixed right-4 top-24 z-30 flex w-[min(26rem,calc(100%-2rem))] flex-col gap-2"></div>
+  {% if user.rol == "coordinador" or user.rol == "tecnico" %}
+    <button type="button" id="activar-sonido" hidden
+            class="fixed bottom-24 left-4 z-30 rounded-full bg-amber-500 px-5 py-3 font-semibold text-white shadow-lg sm:bottom-4">
+      🔔 Activar sonido
+    </button>
+  {% endif %}
 
   <div id="aviso-flotante" hidden class="fixed inset-x-4 bottom-4 z-30 mx-auto max-w-md rounded-xl bg-slate-900 p-4 text-center text-white shadow-xl"></div>
 
@@ -88,8 +99,10 @@
   </script>
 
   {% if user.is_authenticated %}
+  <script src="{% static 'js/formularios.js' %}"></script>
   <script src="{% static 'js/reportes.js' %}"></script>
   <script src="{% static 'js/cronometro.js' %}"></script>
+  <script src="{% static 'js/notificaciones.js' %}"></script>
   <script>
     // Cierre por inactividad. El servidor es quien manda; aquí solo se avisa un minuto antes.
     // Tocar o escribir cuenta como uso y se informa al servidor como máximo una vez por minuto.

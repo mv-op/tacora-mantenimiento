@@ -62,7 +62,7 @@ class PantallasTests(TestCase):
         self.como(self.tecnico)
         r = self.client.get("/ordenes/")
         self.assertContains(r, f"#{self.pk}")
-        self.assertContains(r, "Resolver antes de")
+        self.assertContains(r, "Plazo para resolver")
         self.assertContains(self.client.get(f"/ordenes/{self.pk}/"), "Iniciar trabajo")
         self.client.post(f"/ordenes/{self.pk}/iniciar/")
         self.client.post(f"/ordenes/{self.pk}/pausar/", {"motivo": "Falta el repuesto en bodega."})
@@ -137,7 +137,7 @@ class PantallasTests(TestCase):
         CoordinadorMaquina.objects.create(coordinador=self.coord, maquina=self.otra_maquina)
         self.como(self.coord)
         r = self.client.get("/bandeja/")
-        por_asignar = r.context["secciones"][0][2]
+        por_asignar = r.context["secciones"][0]["tickets"]
         self.assertEqual([t.criticidad for t in por_asignar], ["critica", "urgente"])
 
 
@@ -148,10 +148,10 @@ class AjustesTests(TestCase):
 
     def test_ajustar_sla_queda_en_historial(self):
         r = self.client.get("/sla/")
-        self.assertContains(r, "Asignar antes de")
+        self.assertContains(r, "Plazo para asignar")
         r = self.client.post("/sla/", {"criticidad": "critica", "asignar_horas": "0", "asignar_min": "45",
                                        "resolver_horas": "10", "resolver_min": "0"}, follow=True)
-        self.assertContains(r, "SLA actualizado")
+        self.assertContains(r, "Plazos actualizados")
         regla = ReglaSLA.objects.get(criticidad="critica", activa=True)
         self.assertEqual((regla.minutos_para_asignar, regla.minutos_para_resolver, regla.modificada_por),
                          (45, 600, self.coord))

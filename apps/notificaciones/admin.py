@@ -5,7 +5,7 @@ from .models import Notificacion
 
 @admin.register(Notificacion)
 class NotificacionAdmin(admin.ModelAdmin):
-    list_display = ["creada_en", "destinatario", "tipo", "ticket", "prioridad", "leida_en"]
+    list_display = ["creada_en", "destinatario", "tipo", "ticket", "etapa", "prioridad", "leida_en"]
     list_filter = ["tipo", "prioridad"]
 
     def has_add_permission(self, request):

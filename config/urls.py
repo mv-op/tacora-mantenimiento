@@ -10,5 +10,6 @@ urlpatterns = [
     path("", include("apps.operador.urls")),
     path("", include("apps.tecnico.urls")),
     path("", include("apps.coordinador.urls")),
+    path("", include("apps.notificaciones.urls")),
     path("", include("apps.core.urls")),
 ]

@@ -1,10 +1,13 @@
-<h2 class="mt-6 text-lg font-bold">Historial</h2>
-<ol class="mt-2 space-y-3 border-l-2 border-slate-200 pl-4">
-  {% for evento in eventos %}
-    <li>
-      <div class="font-semibold">{{ evento.get_tipo_display }}</div>
-      <div class="text-sm text-slate-500">{{ evento.fecha|date:"j M Y, H:i" }} · {{ evento.actor }}</div>
-      {% if evento.comentario %}<div class="mt-1 whitespace-pre-line rounded-lg bg-slate-50 p-2 text-slate-700">{{ evento.comentario }}</div>{% endif %}
-    </li>
-  {% endfor %}
-</ol>
+{# Historial plegado para no abrumar; se abre con un toque. #}
+<details class="mt-4 rounded-2xl bg-white p-5 shadow">
+  <summary class="cursor-pointer text-xs font-bold uppercase tracking-wider text-slate-500">Historial · {{ eventos|length }} paso{{ eventos|length|pluralize }}</summary>
+  <ol class="mt-3 space-y-3 border-l-2 border-slate-200 pl-4">
+    {% for evento in eventos %}
+      <li>
+        <div class="font-semibold">{{ evento.get_tipo_display }}</div>
+        <div class="text-sm text-slate-500">{{ evento.fecha|date:"j M Y, H:i" }} · {{ evento.actor }}</div>
+        {% if evento.comentario %}<div class="mt-1 whitespace-pre-line rounded-lg bg-slate-50 p-2 text-slate-700">{{ evento.comentario }}</div>{% endif %}
+      </li>
+    {% endfor %}
+  </ol>
+</details>

@@ -25,7 +25,7 @@ MENUS = {
     Rol.COORDINADOR: [
         Opcion("Bandeja", "bandeja", frozenset({"bandeja", "bandeja_ticket"})),
         Opcion("Máquinas", "maquinas", frozenset({"maquinas", "historial_maquina"})),
-        Opcion("SLA", "ajustar_sla", frozenset({"ajustar_sla"})),
+        Opcion("Plazos", "ajustar_sla", frozenset({"ajustar_sla"})),
         Opcion("Reportar", "reportar", REPORTAR.pantallas),
         CUENTA,
     ],

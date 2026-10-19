@@ -1,0 +1,31 @@
+{% extends "_base_app.html" %}
+{% block titulo %}Notificaciones · Mantenimiento{% endblock %}
+
+{% block paso %}
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <h1 class="text-2xl font-bold">Notificaciones</h1>
+    {% if campana_sin_leer %}
+      <form method="post" action="{% url 'notificaciones_leer_todas' %}">
+        {% csrf_token %}
+        <button type="submit" class="rounded-xl bg-white px-4 py-3 font-semibold shadow">Marcar todas como leídas</button>
+      </form>
+    {% endif %}
+  </div>
+
+  <div class="mt-4 space-y-3">
+    {% for notificacion in notificaciones %}
+      <a href="{% url 'notificacion_abrir' notificacion.pk %}" hx-boost="false"
+         class="block rounded-2xl border-l-8 p-4 shadow {{ notificacion.estilo.tarjeta }} {% if notificacion.leida_en %}opacity-60{% endif %}">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="rounded-full px-3 py-1 text-sm font-semibold {{ notificacion.estilo.etiqueta }}">{{ notificacion.get_tipo_display }}</span>
+          {% if notificacion.ticket %}{% with ticket=notificacion.ticket %}{% include "operador/_criticidad.html" %}{% endwith %}{% endif %}
+          {% if not notificacion.leida_en %}<span class="text-sm font-bold text-blue-700">● Nueva</span>{% endif %}
+          <span class="ml-auto text-sm text-slate-500">{{ notificacion.creada_en|date:"j M, H:i" }}</span>
+        </div>
+        <p class="mt-2 {% if not notificacion.leida_en %}font-semibold{% endif %}">{{ notificacion.mensaje }}</p>
+      </a>
+    {% empty %}
+      <p class="rounded-2xl bg-white p-6 text-center text-slate-500 shadow">No tiene notificaciones.</p>
+    {% endfor %}
+  </div>
+{% endblock %}

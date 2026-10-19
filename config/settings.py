@@ -3,6 +3,7 @@
 Todos los valores que cambian entre local y servidor se leen desde `.env`.
 """
 
+import sys
 from pathlib import Path
 
 import environ
@@ -77,6 +78,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "apps.usuarios.context_processors.sesion",
                 "apps.core.context_processors.menu",
+                "apps.notificaciones.context_processors.campana",
             ],
         },
     },
@@ -118,6 +120,10 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
     {"NAME": "apps.usuarios.validadores.DistintaDeLaInicial"},
 ]
+
+# En las pruebas automáticas se usa un hash rápido (solo ahí); la app real usa el seguro de Django.
+if "test" in sys.argv:
+    PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 
 LOGIN_URL = "ingresar"
 LOGIN_REDIRECT_URL = "inicio"

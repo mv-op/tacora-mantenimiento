@@ -3,6 +3,7 @@
 /* Dónde buscar las clases de Tailwind */
 @source "../../templates";
 @source "../../apps";
+@source "../js";
 
 /* Al cambiar de nivel en el mosaico, la pantalla aparece con un movimiento corto para que se note. */
 @keyframes aparecer {

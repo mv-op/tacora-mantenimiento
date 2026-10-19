@@ -1,0 +1,1 @@
+{% load tickets %}{% if s.congelado %}{% if s.restante.total_seconds >= 0 %}Resuelto a tiempo{% else %}Resuelto con {{ s.restante|duracion }} de retraso{% endif %}{% elif s.restante.total_seconds >= 0 %}Quedan {{ s.restante|duracion }}{% else %}Vencido hace {{ s.restante|duracion }}{% endif %}

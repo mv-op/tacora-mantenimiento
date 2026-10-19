@@ -60,8 +60,8 @@ class ReglaSLA(models.Model):
     history = HistoricalRecords()
 
     class Meta:
-        verbose_name = "regla SLA"
-        verbose_name_plural = "reglas SLA"
+        verbose_name = "plazo de atención (SLA)"
+        verbose_name_plural = "plazos de atención (SLA)"
         constraints = [
             models.UniqueConstraint(fields=["criticidad"], condition=Q(activa=True), name="una_regla_activa_por_criticidad"),
         ]

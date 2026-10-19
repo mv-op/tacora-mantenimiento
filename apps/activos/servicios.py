@@ -6,6 +6,8 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from rapidfuzz import fuzz, process
 
+from apps.notificaciones.servicios import notificar_nodo_pendiente
+
 from .models import CoordinadorMaquina, EstadoCuraduria, Nivel, NodoActivo, Origen
 from .normalizar import normalizar
 
@@ -81,7 +83,7 @@ def crear_nodo_operador(padre, nombre, usuario):
     nodo.full_clean()
     nodo._change_reason = "Creado por operador desde la app"
     nodo.save()
-    # Fase 6: notificar() al administrador (nodo pendiente de curaduría).
+    notificar_nodo_pendiente(nodo)
     return nodo, True
 
 
