@@ -36,6 +36,9 @@ class ReglaSLAAdmin(SimpleHistoryAdmin):
     list_filter = ["activa"]
     readonly_fields = ["modificada_por", "modificada_en"]
 
+    def has_delete_permission(self, request, obj=None):
+        return False  # Se ajustan o se desactivan; no se borran, para no perder el historial.
+
     def save_model(self, request, obj, form, change):
         obj.modificada_por = request.user
         super().save_model(request, obj, form, change)
