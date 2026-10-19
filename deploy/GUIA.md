@@ -74,14 +74,11 @@ Comprobar:
 
 ---
 
-## 4. Permisos para que Nginx lea los estáticos
+## 4. Estáticos (CSS y JavaScript)
 
-```bash
-namei -l /home/imrodriguez/tacora-mantenimiento/staticfiles/css/app.css
-```
-
-Cada carpeta de la lista debe tener `x` para "otros" (por ejemplo `drwxr-x--x` o `drwxr-xr-x`).
-Si alguna sale sin ella (por ejemplo `drwx------`), avisar antes de cambiar nada.
+No requiere nada. La carpeta personal es `drwx------` y Nginx (`www-data`) no puede leerla, así que los estáticos los
+sirve Django con WhiteNoise. Nginx solo pasa las peticiones por el socket. Por eso, después de cada
+`collectstatic` hay que reiniciar el servicio.
 
 ---
 
