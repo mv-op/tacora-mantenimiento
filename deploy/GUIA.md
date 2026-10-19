@@ -32,7 +32,8 @@ python3 -m venv .venv
 chmod +x deploy/respaldo.sh
 ```
 
-No hace falta `apt install`: `sqlite3` y `python3-venv` ya están en el servidor.
+No hace falta `apt install`: `python3-venv` ya está en el servidor, y el respaldo usa la librería sqlite3 de Python
+(no necesita el programa `sqlite3` del sistema).
 
 ---
 
