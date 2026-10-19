@@ -130,12 +130,9 @@ La guía completa y al día está en `deploy/GUIA.md`.
   ```bash
   H='-H Host:tecnosur.mantenimiento.tacorapp.com -H X-Forwarded-Proto:https'
   S='--unix-socket /run/tacora-mantenimiento.sock'
-  sudo curl $S $H -s -o /dev/null -w "inicio: %{http_code} -> %{redirect_url}
-" http://localhost/
-  sudo curl $S $H -s -o /dev/null -w "ingreso: %{http_code}
-" http://localhost/ingresar/
-  sudo curl $S $H -s -o /dev/null -w "estilos: %{http_code}
-" http://localhost/static/css/app.css
+  sudo curl $S $H -s -o /dev/null -w "inicio: %{http_code} -> %{redirect_url}\n" http://localhost/
+  sudo curl $S $H -s -o /dev/null -w "ingreso: %{http_code}\n" http://localhost/ingresar/
+  sudo curl $S $H -s -o /dev/null -w "estilos: %{http_code}\n" http://localhost/static/css/app.css
   sudo curl $S $H -s http://localhost/ingresar/ | grep -o "<title>.*</title>"
   ```
   Esperado: `302 -> .../ingresar/?next=/`, `200`, `200` y el título.
