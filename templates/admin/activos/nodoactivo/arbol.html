@@ -1,0 +1,35 @@
+{% extends "admin/base_site.html" %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">Inicio</a> ›
+  <a href="{% url 'admin:activos_nodoactivo_changelist' %}">Nodos de activos</a> › Árbol
+</div>
+{% endblock %}
+
+{% block content %}
+<style>
+  .arbol ul { list-style: none; margin: 0; padding-left: 1.4em; border-left: 1px dashed #ccc; }
+  .arbol > ul { padding-left: 0; border: 0; }
+  .arbol li { margin: 2px 0; list-style: none; }
+  .arbol summary { cursor: pointer; padding: 3px 0; }
+  .arbol .hoja { padding: 3px 0 3px 1.1em; }
+  .nivel { color: #777; font-size: 0.85em; margin-left: 4px; }
+  .pendiente { background: #fff1c2; color: #6b4e00; border-radius: 4px; padding: 0 6px; font-size: 0.85em; margin-left: 4px; }
+</style>
+
+<p>
+  {{ total }} nodos activos · {{ maquinas|length }} máquinas
+  {% if pendientes %}· <span class="pendiente">{{ pendientes }} pendientes de curaduría</span>{% endif %}
+  · <a href="#" onclick="document.querySelectorAll('.arbol details').forEach(d => d.open = true); return false;">Abrir todo</a>
+  · <a href="#" onclick="document.querySelectorAll('.arbol details').forEach(d => d.open = false); return false;">Cerrar todo</a>
+</p>
+
+<div class="arbol">
+  {% if maquinas %}
+    <ul>{% for nodo in maquinas %}{% include "admin/activos/nodoactivo/arbol_nodo.html" %}{% endfor %}</ul>
+  {% else %}
+    <p>Aún no hay activos. <a href="{% url 'admin:activos_importar' %}">Importe el Excel</a>.</p>
+  {% endif %}
+</div>
+{% endblock %}

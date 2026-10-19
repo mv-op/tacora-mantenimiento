@@ -1,0 +1,18 @@
+<li>
+  {% if nodo.lista_hijos %}
+    <details>
+      <summary>
+        <a href="{% url 'admin:activos_nodoactivo_change' nodo.pk %}">{{ nodo.nombre }}</a>
+        <span class="nivel">{{ nodo.get_nivel_display }} · {{ nodo.lista_hijos|length }}</span>
+        {% if nodo.estado_curaduria == "pendiente" %}<span class="pendiente">pendiente</span>{% endif %}
+      </summary>
+      <ul>{% for nodo in nodo.lista_hijos %}{% include "admin/activos/nodoactivo/arbol_nodo.html" %}{% endfor %}</ul>
+    </details>
+  {% else %}
+    <div class="hoja">
+      <a href="{% url 'admin:activos_nodoactivo_change' nodo.pk %}">{{ nodo.nombre }}</a>
+      <span class="nivel">{{ nodo.get_nivel_display }}</span>
+      {% if nodo.estado_curaduria == "pendiente" %}<span class="pendiente">pendiente</span>{% endif %}
+    </div>
+  {% endif %}
+</li>

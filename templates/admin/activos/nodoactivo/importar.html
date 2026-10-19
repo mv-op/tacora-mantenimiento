@@ -1,0 +1,98 @@
+{% extends "admin/base_site.html" %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">Inicio</a> ›
+  <a href="{% url 'admin:activos_nodoactivo_changelist' %}">Nodos de activos</a> › Importar Excel
+</div>
+{% endblock %}
+
+{% block content %}
+<style>
+  .paso { max-width: 900px; }
+  .paso table { width: 100%; margin: 1em 0; }
+  .boton-grande { font-size: 1.1em; padding: 12px 24px !important; }
+  .caja { padding: 12px 16px; border-radius: 6px; margin: 1em 0; }
+  .caja-error { background: #fdecea; color: #8a1c1c; }
+  .caja-aviso { background: #fff7e0; color: #6b4e00; }
+  .caja-ok { background: #e7f6ec; color: #1e5c34; }
+</style>
+<div class="paso">
+
+{% if not resultado %}
+  <h2>Paso 1 de 2 · Subir y revisar</h2>
+  <p>Suba el Excel con la plantilla del árbol. En este paso <strong>no se guarda nada</strong>: solo se revisa.</p>
+  <p><a href="{% url 'admin:activos_plantilla' %}">Descargar la plantilla</a> si aún no la tiene.</p>
+  <form method="post" enctype="multipart/form-data" class="con-envio">
+    {% csrf_token %}
+    <p><input type="file" name="archivo" accept=".xlsx" required></p>
+    <button type="submit" class="button default boton-grande">Revisar archivo</button>
+  </form>
+
+{% else %}
+  <h2>{% if resultado.errores %}El archivo tiene errores{% else %}Paso 2 de 2 · Confirmar{% endif %}</h2>
+  {% if nombre_archivo %}<p>Archivo: <strong>{{ nombre_archivo }}</strong> · {{ resultado.rutas|length }} filas válidas</p>{% endif %}
+
+  {% if resultado.errores %}
+    <div class="caja caja-error">
+      <strong>No se importó nada.</strong> Corrija estas filas en el Excel y súbalo de nuevo.
+    </div>
+    <table>
+      <thead><tr><th>Fila</th><th>Problema</th></tr></thead>
+      <tbody>
+        {% for fila, motivo in resultado.errores %}<tr><td>{{ fila }}</td><td>{{ motivo }}</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+
+  {% if resultado.rutas %}
+    <h3>Resumen por nivel</h3>
+    <table>
+      <thead><tr><th>Nivel</th><th>Nuevos</th><th>Ya existen</th></tr></thead>
+      <tbody>
+        {% for nivel, nuevos, existentes in resultado.por_nivel %}
+          <tr><td>{{ nivel }}</td><td>{{ nuevos }}</td><td>{{ existentes }}</td></tr>
+        {% endfor %}
+        <tr><th>Total</th><th>{{ resultado.total_nuevos }}</th><th>{{ resultado.total_existentes }}</th></tr>
+      </tbody>
+    </table>
+  {% endif %}
+
+  {% if resultado.avisos %}
+    <div class="caja caja-aviso">
+      <strong>Nombres parecidos ({{ resultado.avisos|length }}).</strong>
+      No bloquean la importación, pero revise si son el mismo activo escrito distinto.
+      <ul>{% for aviso in resultado.avisos %}<li>{{ aviso }}</li>{% endfor %}</ul>
+    </div>
+  {% endif %}
+
+  {% if not resultado.errores %}
+    {% if resultado.total_nuevos %}
+      <div class="caja caja-ok">Todo está en orden. Al confirmar se crearán <strong>{{ resultado.total_nuevos }}</strong> nodos nuevos.</div>
+      <form method="post" class="con-envio">
+        {% csrf_token %}
+        <input type="hidden" name="token" value="{{ token }}">
+        <button type="submit" class="button default boton-grande">Importar {{ resultado.total_nuevos }} nodos</button>
+        <a href="{% url 'admin:activos_importar' %}" class="button boton-grande">Cancelar</a>
+      </form>
+    {% else %}
+      <div class="caja caja-ok">Todos los nodos del archivo ya existen. No hay nada que importar.</div>
+    {% endif %}
+  {% endif %}
+
+  <p><a href="{% url 'admin:activos_importar' %}">Subir otro archivo</a></p>
+{% endif %}
+</div>
+
+<script>
+  // El botón de envío se bloquea al primer clic y muestra "Enviando…".
+  document.querySelectorAll("form.con-envio").forEach(function (formulario) {
+    formulario.addEventListener("submit", function (e) {
+      const boton = formulario.querySelector("[type=submit]");
+      if (boton.disabled) { e.preventDefault(); return; }
+      boton.textContent = "Enviando…";
+      setTimeout(function () { boton.disabled = true; }, 0);
+    });
+  });
+</script>
+{% endblock %}

@@ -1,7 +1,18 @@
+import time
+import uuid
+
+from django.conf import settings
 from django.contrib import admin, messages
+from django.http import HttpResponse
+from django.shortcuts import redirect
+from django.template.response import TemplateResponse
+from django.urls import path
 from simple_history.admin import SimpleHistoryAdmin
 
+from . import importacion
 from .models import CoordinadorMaquina, EstadoCuraduria, NodoActivo
+
+CARPETA_IMPORTACIONES = settings.DATA_DIR / "importaciones"
 
 
 class HijosInline(admin.TabularInline):
@@ -29,9 +40,81 @@ class NodoActivoAdmin(SimpleHistoryAdmin):
               "fusionado_en", "creado_por", "creado_en", "actualizado_en"]
     inlines = [HijosInline]
     actions = ["aprobar", "desactivar"]
+    change_list_template = "admin/activos/nodoactivo/change_list.html"
 
     def has_delete_permission(self, request, obj=None):
         return False  # Los nodos nunca se borran.
+
+    def get_urls(self):
+        propias = [
+            path("plantilla/", self.admin_site.admin_view(self.vista_plantilla), name="activos_plantilla"),
+            path("importar/", self.admin_site.admin_view(self.vista_importar), name="activos_importar"),
+            path("arbol/", self.admin_site.admin_view(self.vista_arbol), name="activos_arbol"),
+        ]
+        return propias + super().get_urls()
+
+    def vista_plantilla(self, request):
+        respuesta = HttpResponse(
+            importacion.generar_plantilla(),
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        respuesta["Content-Disposition"] = 'attachment; filename="plantilla_arbol_activos.xlsx"'
+        return respuesta
+
+    def vista_importar(self, request):
+        """Paso 1: subir y revisar (no guarda). Paso 2: confirmar (vuelve a analizar e importa)."""
+        if not self.has_add_permission(request):
+            return redirect("admin:activos_nodoactivo_changelist")
+        contexto = {**self.admin_site.each_context(request), "opts": self.model._meta, "title": "Importar árbol desde Excel"}
+
+        if request.method == "POST" and "archivo" in request.FILES:
+            CARPETA_IMPORTACIONES.mkdir(parents=True, exist_ok=True)
+            # Limpia archivos de revisiones que nunca se confirmaron.
+            for viejo in CARPETA_IMPORTACIONES.glob("*.xlsx"):
+                if time.time() - viejo.stat().st_mtime > 24 * 3600:
+                    viejo.unlink(missing_ok=True)
+            token = uuid.uuid4().hex
+            ruta = CARPETA_IMPORTACIONES / f"{token}.xlsx"
+            with open(ruta, "wb") as destino:
+                for trozo in request.FILES["archivo"].chunks():
+                    destino.write(trozo)
+            contexto.update(resultado=importacion.analizar(ruta), token=token,
+                            nombre_archivo=request.FILES["archivo"].name)
+            if contexto["resultado"].errores:
+                ruta.unlink(missing_ok=True)
+            return TemplateResponse(request, "admin/activos/nodoactivo/importar.html", contexto)
+
+        if request.method == "POST" and "token" in request.POST:
+            token = request.POST["token"]
+            ruta = CARPETA_IMPORTACIONES / f"{token}.xlsx"
+            if not token.isalnum() or not ruta.exists():
+                self.message_user(request, "El archivo ya no está disponible. Súbalo de nuevo.", messages.ERROR)
+                return redirect("admin:activos_importar")
+            resultado = importacion.analizar(ruta)  # Se analiza otra vez por si el árbol cambió.
+            if resultado.errores:
+                contexto.update(resultado=resultado, nombre_archivo="")
+                ruta.unlink(missing_ok=True)
+                return TemplateResponse(request, "admin/activos/nodoactivo/importar.html", contexto)
+            creados = importacion.importar(resultado, request.user)
+            ruta.unlink(missing_ok=True)
+            self.message_user(request, f"Importación terminada: {creados} nodos nuevos.", messages.SUCCESS)
+            return redirect("admin:activos_arbol")
+
+        return TemplateResponse(request, "admin/activos/nodoactivo/importar.html", contexto)
+
+    def vista_arbol(self, request):
+        nodos = list(NodoActivo.objects.filter(is_active=True).order_by("nombre"))
+        hijos = {}
+        for nodo in nodos:
+            hijos.setdefault(nodo.padre_id, []).append(nodo)
+        for nodo in nodos:
+            nodo.lista_hijos = hijos.get(nodo.pk, [])
+        contexto = {
+            **self.admin_site.each_context(request), "opts": self.model._meta, "title": "Árbol de activos",
+            "maquinas": hijos.get(None, []), "total": len(nodos),
+            "pendientes": sum(n.estado_curaduria == EstadoCuraduria.PENDIENTE for n in nodos),
+        }
+        return TemplateResponse(request, "admin/activos/nodoactivo/arbol.html", contexto)
 
     def save_model(self, request, obj, form, change):
         if not change and not obj.creado_por_id:
