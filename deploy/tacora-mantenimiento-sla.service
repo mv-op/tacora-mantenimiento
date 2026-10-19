@@ -1,5 +1,5 @@
 [Unit]
-Description=CMMS Mantenimiento: revisar plazos (SLA)
+Description=tacora-mantenimiento: revisar plazos (SLA)
 
 [Service]
 Type=oneshot

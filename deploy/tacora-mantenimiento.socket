@@ -1,0 +1,11 @@
+[Unit]
+Description=Socket de Gunicorn para tacora-mantenimiento
+
+[Socket]
+ListenStream=/run/tacora-mantenimiento.sock
+# Solo Nginx (www-data) puede conectarse; Gunicorn recibe el socket ya abierto desde systemd.
+SocketUser=www-data
+SocketMode=0600
+
+[Install]
+WantedBy=sockets.target

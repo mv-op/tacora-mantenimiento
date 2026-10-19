@@ -1,65 +1,45 @@
-# Guía de despliegue — CMMS Tecnosur Mantenimiento
+# Guía de despliegue — tacora-mantenimiento
 
 Servidor: VM de Tacora (Debian 13, Python 3.13), usuario `imrodriguez`.
 Dominio: `tecnosur.mantenimiento.tacorapp.com`.
 
+**Convive con Tacora en la misma VM. Nada de esta guía toca a Tacora** (`tacora.service`, `/etc/nginx/sites-available/tacora`,
+`~/tacora_django`, puerto 8000). Todo lo nuevo lleva el nombre `tacora-mantenimiento`.
+
 | Qué | Dónde |
 | --- | --- |
 | Código | `/home/imrodriguez/tacora-mantenimiento` |
+| Entorno de Python | `/home/imrodriguez/tacora-mantenimiento/.venv` |
 | Datos (base SQLite y respaldos) | `/home/imrodriguez/tacora-mantenimiento-data` |
 | Secretos | `/home/imrodriguez/tacora-mantenimiento/.env` (permisos 600) |
-| Socket de Gunicorn | `/run/mantenimiento/gunicorn.sock` |
+| Socket de Gunicorn | `/run/tacora-mantenimiento.sock` (lo crea systemd) |
+| Servicio y socket | `tacora-mantenimiento.service`, `tacora-mantenimiento.socket` |
+| Timers | `tacora-mantenimiento-sla.timer`, `tacora-mantenimiento-respaldo.timer` |
+| Nginx | `/etc/nginx/sites-available/tacora-mantenimiento` |
 
 Haz los pasos en orden. Cada uno dice cómo comprobar que salió bien.
 
 ---
 
-## 0. Antes de empezar (en tu PC)
-
-1. Crear el repositorio **privado** en GitHub, vacío (sin README).
-2. Subir el código:
-
-   ```powershell
-   git remote add origin git@github.com:<cuenta>/tacora-mantenimiento.git
-   git push -u origin main
-   ```
-
-3. DNS: registro **A** `tecnosur.mantenimiento` → IP pública de la VM (la misma de `tecnosur.tacorapp.com`).
-
-   Comprobar (puede tardar unos minutos): `nslookup tecnosur.mantenimiento.tacorapp.com` devuelve la IP de la VM.
-
----
-
-## 1. Programas del sistema
-
-```bash
-sudo apt update
-sudo apt install -y sqlite3 python3-venv git
-```
-
-Comprobar: `sqlite3 --version` y `python3 --version` (3.13).
-
----
-
-## 2. Traer el código
-
-El servidor necesita permiso para leer el repo privado. Si Tacora ya usa una llave SSH con GitHub, sirve la misma
-(`ssh -T git@github.com` debe saludarte con tu usuario).
+## 1. Traer el código y crear el entorno de Python
 
 ```bash
 cd ~
-git clone git@github.com:<cuenta>/tacora-mantenimiento.git
+git clone https://github.com/mv-op/tacora-mantenimiento.git
 cd tacora-mantenimiento
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 chmod +x deploy/respaldo.sh
 ```
 
+No hace falta `apt install`: `sqlite3` y `python3-venv` ya están en el servidor.
+
 ---
 
-## 3. Archivo `.env`
+## 2. Archivo `.env`
 
 ```bash
+cd ~/tacora-mantenimiento
 cp .env.example .env
 chmod 600 .env
 .venv/bin/python -c "import secrets; print(secrets.token_urlsafe(50))"   # copia el resultado
@@ -68,19 +48,20 @@ nano .env
 
 Deja así los valores:
 
-- `SECRET_KEY` = la clave que acabas de generar (nueva, distinta de la de local).
+- `SECRET_KEY` = la clave que acabas de generar (nueva, distinta de la de local y de la de Tacora).
 - `DEBUG=False`
 - `ALLOWED_HOSTS` y `CSRF_TRUSTED_ORIGINS`: ya vienen bien.
 - `DATA_DIR=/home/imrodriguez/tacora-mantenimiento-data`
-- `CLAVE_INICIAL` = la contraseña inicial definitiva (mínimo 8 caracteres, no solo números).
+- `CLAVE_INICIAL` = la contraseña inicial definitiva (mínimo 8 caracteres, no solo números, **distinta de la de local**).
 
 Guardar en nano: `Ctrl + O`, `Enter`, `Ctrl + X`.
 
 ---
 
-## 4. Base de datos, estáticos y administrador
+## 3. Base de datos, estáticos y administrador
 
 ```bash
+cd ~/tacora-mantenimiento
 .venv/bin/python manage.py migrate
 .venv/bin/python manage.py collectstatic --noinput
 .venv/bin/python manage.py createsuperuser
@@ -93,75 +74,111 @@ Comprobar:
 
 ---
 
-## 5. Permisos para que Nginx lea los estáticos
-
-Nginx (usuario `www-data`) debe poder entrar a la carpeta personal. Tacora ya funciona así, pero hay que confirmarlo:
+## 4. Permisos para que Nginx lea los estáticos
 
 ```bash
 namei -l /home/imrodriguez/tacora-mantenimiento/staticfiles/css/app.css
 ```
 
 Cada carpeta de la lista debe tener `x` para "otros" (por ejemplo `drwxr-x--x` o `drwxr-xr-x`).
-Si `/home/imrodriguez` sale `drwx------`, corre `chmod o+x /home/imrodriguez`.
+Si alguna sale sin ella (por ejemplo `drwx------`), avisar antes de cambiar nada.
 
 ---
 
-## 6. Servicio de la aplicación
+## 5. Respaldo previo
+
+Antes de los pasos con `sudo`, una copia de lo que ya existe en Nginx (no se va a tocar, es por seguridad):
 
 ```bash
-sudo cp deploy/mantenimiento.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable --now mantenimiento
-sudo systemctl status mantenimiento
+mkdir -p ~/backups/$(date +%F)
+sudo cp -a /etc/nginx/sites-available ~/backups/$(date +%F)/nginx-sites-available
+sudo cp -a /etc/nginx/sites-enabled ~/backups/$(date +%F)/nginx-sites-enabled
 ```
 
-Comprobar: dice `active (running)` y existe `/run/mantenimiento/gunicorn.sock`.
-Si falla: `journalctl -u mantenimiento -n 50`.
+---
+
+## 6. Servicio y socket de la aplicación
+
+Archivos **nuevos** en `/etc/systemd/system/`: `tacora-mantenimiento.socket` y `tacora-mantenimiento.service`.
+
+```bash
+cd ~/tacora-mantenimiento
+sudo cp deploy/tacora-mantenimiento.socket deploy/tacora-mantenimiento.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now tacora-mantenimiento.socket
+sudo systemctl enable --now tacora-mantenimiento.service
+sudo systemctl status tacora-mantenimiento
+```
+
+Comprobar:
+- `status` dice `active (running)`.
+- `ls -l /run/tacora-mantenimiento.sock` muestra el socket con dueño `www-data`.
+- `sudo curl --unix-socket /run/tacora-mantenimiento.sock -s -o /dev/null -w "%{http_code}\n" -H "Host: tecnosur.mantenimiento.tacorapp.com" http://localhost/`
+  devuelve `301` (la app responde y redirige a HTTPS).
+
+Si falla: `journalctl -u tacora-mantenimiento -n 50 --no-pager`.
 
 ---
 
-## 7. Nginx y HTTPS
+## 7. DNS
+
+**Avisar antes de este paso.** Registro **A** `tecnosur.mantenimiento` → IP pública de la VM (la misma de `tecnosur.tacorapp.com`).
+
+Comprobar (puede tardar unos minutos): `getent hosts tecnosur.mantenimiento.tacorapp.com` devuelve la IP de la VM.
+
+---
+
+## 8. Nginx y HTTPS
+
+Archivo **nuevo** `/etc/nginx/sites-available/tacora-mantenimiento` y su enlace en `sites-enabled`.
 
 ```bash
-sudo cp deploy/nginx-mantenimiento.conf /etc/nginx/sites-available/mantenimiento
-sudo ln -s /etc/nginx/sites-available/mantenimiento /etc/nginx/sites-enabled/
+cd ~/tacora-mantenimiento
+sudo cp deploy/nginx-tacora-mantenimiento.conf /etc/nginx/sites-available/tacora-mantenimiento
+sudo ln -s /etc/nginx/sites-available/tacora-mantenimiento /etc/nginx/sites-enabled/tacora-mantenimiento
 sudo nginx -t
+```
+
+Solo si `nginx -t` dice `syntax is ok` y `test is successful`:
+
+```bash
 sudo systemctl reload nginx
 ```
 
-`nginx -t` debe decir `syntax is ok` y `test is successful`. Solo entonces se hace el `reload`.
-Este archivo es nuevo y no toca el de Tacora.
-
-Con el DNS ya apuntando a la VM:
+Con el DNS ya apuntando a la VM, certificado propio (no reutiliza el de Tacora):
 
 ```bash
 sudo certbot --nginx -d tecnosur.mantenimiento.tacorapp.com
 ```
 
-Certbot pregunta si redirigir HTTP a HTTPS: responde que **sí**.
+Certbot pregunta si redirigir HTTP a HTTPS: responder que **sí**. Solo modifica el archivo `tacora-mantenimiento`.
 
-Comprobar: abrir `https://tecnosur.mantenimiento.tacorapp.com` en el navegador; aparece la pantalla de ingreso con candado.
-Y que Tacora sigue bien: `https://tecnosur.tacorapp.com`.
+Comprobar:
+- `https://tecnosur.mantenimiento.tacorapp.com` muestra la pantalla de ingreso con candado.
+- `https://tecnosur.tacorapp.com` (Tacora) sigue funcionando igual.
 
 ---
 
-## 8. Timers: plazos y respaldo
+## 9. Timers: plazos y respaldo
+
+Archivos **nuevos** en `/etc/systemd/system/`.
 
 ```bash
-sudo cp deploy/mantenimiento-sla.service deploy/mantenimiento-sla.timer /etc/systemd/system/
-sudo cp deploy/mantenimiento-respaldo.service deploy/mantenimiento-respaldo.timer /etc/systemd/system/
+cd ~/tacora-mantenimiento
+sudo cp deploy/tacora-mantenimiento-sla.service deploy/tacora-mantenimiento-sla.timer /etc/systemd/system/
+sudo cp deploy/tacora-mantenimiento-respaldo.service deploy/tacora-mantenimiento-respaldo.timer /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable --now mantenimiento-sla.timer mantenimiento-respaldo.timer
+sudo systemctl enable --now tacora-mantenimiento-sla.timer tacora-mantenimiento-respaldo.timer
 ```
 
 Probarlos una vez a mano:
 
 ```bash
-sudo systemctl start mantenimiento-sla
-journalctl -u mantenimiento-sla -n 5           # "... tickets revisados · ... avisos nuevos"
-sudo systemctl start mantenimiento-respaldo
-ls -lh ~/tacora-mantenimiento-data/respaldos/  # aparece mantenimiento-AAAA-MM-DD.sqlite3.gz
-systemctl list-timers 'mantenimiento*'         # muestra la próxima ejecución de cada uno
+sudo systemctl start tacora-mantenimiento-sla
+journalctl -u tacora-mantenimiento-sla -n 5 --no-pager      # "... tickets revisados · ... avisos nuevos"
+sudo systemctl start tacora-mantenimiento-respaldo
+ls -lh ~/tacora-mantenimiento-data/respaldos/               # aparece mantenimiento-AAAA-MM-DD.sqlite3.gz
+systemctl list-timers 'tacora-mantenimiento*'               # próxima ejecución de cada uno
 ```
 
 El respaldo corre a las 2:00 a. m. (hora Bogotá) y guarda 30 días. El snapshot semanal del disco se programa en la
@@ -169,7 +186,7 @@ consola de Google Cloud (Compute Engine → Snapshots → Crear programación de
 
 ---
 
-## 9. Primeros datos
+## 10. Primeros datos
 
 En `https://tecnosur.mantenimiento.tacorapp.com/admin/`:
 
@@ -189,25 +206,25 @@ git pull
 .venv/bin/pip install -r requirements.txt     # solo si cambió requirements.txt
 .venv/bin/python manage.py migrate
 .venv/bin/python manage.py collectstatic --noinput
-sudo systemctl restart mantenimiento
+sudo systemctl restart tacora-mantenimiento
 ```
 
 ## Comandos útiles
 
 | Para | Comando |
 | --- | --- |
-| Ver errores de la app | `journalctl -u mantenimiento -n 100` |
-| Seguir errores en vivo | `journalctl -u mantenimiento -f` |
-| Reiniciar la app | `sudo systemctl restart mantenimiento` |
-| Ver los timers | `systemctl list-timers 'mantenimiento*'` |
+| Ver errores de la app | `journalctl -u tacora-mantenimiento -n 100 --no-pager` |
+| Seguir errores en vivo | `journalctl -u tacora-mantenimiento -f` |
+| Reiniciar la app | `sudo systemctl restart tacora-mantenimiento` |
+| Ver los timers | `systemctl list-timers 'tacora-mantenimiento*'` |
 
 ## Restaurar un respaldo
 
 ```bash
-sudo systemctl stop mantenimiento
+sudo systemctl stop tacora-mantenimiento
 cd ~/tacora-mantenimiento-data
 mv mantenimiento.sqlite3 mantenimiento.sqlite3.antes
 rm -f mantenimiento.sqlite3-wal mantenimiento.sqlite3-shm
 gunzip -c respaldos/mantenimiento-AAAA-MM-DD.sqlite3.gz > mantenimiento.sqlite3
-sudo systemctl start mantenimiento
+sudo systemctl start tacora-mantenimiento
 ```

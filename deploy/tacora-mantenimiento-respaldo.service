@@ -1,5 +1,5 @@
 [Unit]
-Description=CMMS Mantenimiento: respaldo diario de la base SQLite
+Description=tacora-mantenimiento: respaldo diario de la base SQLite
 
 [Service]
 Type=oneshot
