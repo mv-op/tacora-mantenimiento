@@ -8,18 +8,46 @@
   <script src="{% static 'vendor/htmx.min.js' %}" defer></script>
 </head>
 <body class="min-h-screen bg-slate-100 text-slate-900" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
-  <header class="sticky top-0 z-10 flex items-center justify-between gap-4 bg-slate-900 px-4 py-3 text-white">
-    <div id="reloj" class="text-4xl font-bold tabular-nums" data-epoch-ms="{% now 'U' %}000">{% now "H:i" %}</div>
-    <div class="text-right text-sm">
-      {% if user.is_authenticated %}
-        <div class="font-semibold">{{ user.get_full_name|default:user.username }}</div>
-      {% endif %}
-    </div>
+  <header class="sticky top-0 z-10 flex items-center justify-between gap-3 bg-slate-900 px-4 py-3 text-white">
+    <div id="reloj" class="text-4xl font-bold tabular-nums sm:text-5xl" data-epoch-ms="{% now 'U' %}000">{% now "H:i" %}</div>
+    {% if user.is_authenticated %}
+      <div class="flex items-center gap-3">
+        <div class="text-right leading-tight">
+          <div class="font-semibold">{{ user }}</div>
+          <div class="text-sm text-slate-300">{{ user.get_rol_display }}</div>
+        </div>
+        <button type="button" disabled title="Notificaciones (disponible en la Fase 6)"
+                class="relative rounded-xl bg-slate-800 p-3 text-slate-300">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5m6 0a3 3 0 1 1-6 0m6 0H9"/>
+          </svg>
+        </button>
+        <form method="post" action="{% url 'salir' %}">
+          {% csrf_token %}
+          <button type="submit" class="rounded-xl bg-slate-700 px-4 py-3 font-semibold">Salir</button>
+        </form>
+      </div>
+    {% endif %}
   </header>
 
   <main class="mx-auto max-w-3xl p-4">
+    {% if messages %}
+      {% for mensaje in messages %}
+        <div class="mb-4 rounded-xl bg-blue-100 p-4 text-blue-900">{{ mensaje }}</div>
+      {% endfor %}
+    {% endif %}
     {% block contenido %}{% endblock %}
   </main>
+
+  {% if user.is_authenticated %}
+    <div id="aviso-inactividad" hidden class="fixed inset-0 z-20 flex items-center justify-center bg-black/60 p-4">
+      <div class="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-xl">
+        <p class="text-xl font-bold">¿Sigue ahí?</p>
+        <p class="mt-2 text-slate-600">Su sesión se cerrará en <span id="aviso-segundos">60</span> segundos por inactividad.</p>
+        <button type="button" id="seguir-conectado" class="mt-6 w-full rounded-xl bg-blue-600 px-6 py-4 text-lg font-semibold text-white">Seguir conectado</button>
+      </div>
+    </div>
+  {% endif %}
 
   <script>
     // Reloj en hora Bogotá: arranca con la hora del servidor y el navegador solo la avanza.
@@ -54,5 +82,48 @@
       });
     });
   </script>
+
+  {% if user.is_authenticated %}
+  <script>
+    // Cierre por inactividad. El servidor es quien manda; aquí solo se avisa un minuto antes.
+    // Tocar o escribir cuenta como uso y se informa al servidor como máximo una vez por minuto.
+    (function () {
+      const limite = {{ inactividad_minutos }} * 60 * 1000;
+      const aviso = document.getElementById("aviso-inactividad");
+      const segundos = document.getElementById("aviso-segundos");
+      const csrf = "{{ csrf_token }}";
+      let actividadServidor = Date.now();   // última actividad que el servidor conoce
+      let usoPendiente = false;
+
+      function avisarUso() {
+        actividadServidor = Date.now();
+        usoPendiente = false;
+        aviso.hidden = true;
+        fetch("{% url 'sesion_seguir' %}", { method: "POST", headers: { "X-CSRFToken": csrf } });
+      }
+      ["click", "keydown", "touchstart", "scroll"].forEach(function (evento) {
+        document.addEventListener(evento, function () {
+          if (Date.now() - actividadServidor > 60 * 1000) avisarUso(); else usoPendiente = true;
+        }, { passive: true });
+      });
+      document.getElementById("seguir-conectado").addEventListener("click", avisarUso);
+      // Las peticiones HTMX normales también son uso (las automáticas llevan X-Consulta-Automatica).
+      document.addEventListener("htmx:afterRequest", function (e) {
+        const cabeceras = (e.detail.requestConfig && e.detail.requestConfig.headers) || {};
+        if (!cabeceras["X-Consulta-Automatica"]) { actividadServidor = Date.now(); usoPendiente = false; }
+      });
+
+      setInterval(function () {
+        const transcurrido = Date.now() - actividadServidor;
+        if (usoPendiente && transcurrido > 60 * 1000) { avisarUso(); return; }
+        if (transcurrido >= limite + 2000) { window.location.reload(); return; }
+        if (transcurrido >= limite - 60 * 1000) {
+          aviso.hidden = false;
+          segundos.textContent = Math.max(0, Math.ceil((limite - transcurrido) / 1000));
+        }
+      }, 1000);
+    })();
+  </script>
+  {% endif %}
 </body>
 </html>

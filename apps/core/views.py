@@ -1,10 +1,8 @@
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
-from django.utils import timezone
 
 
+@login_required
 def inicio(request):
-    contexto = {
-        "ahora": timezone.localtime(),
-        "es_htmx": request.headers.get("HX-Request") == "true",
-    }
-    return render(request, "inicio.html", contexto)
+    """Pantalla de inicio según el rol. Las pantallas reales llegan en las Fases 4 y 5."""
+    return render(request, "inicio.html")

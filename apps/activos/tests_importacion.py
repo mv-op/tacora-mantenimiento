@@ -1,9 +1,10 @@
 import io
 
+from django.conf import settings
 from django.test import TestCase
 from openpyxl import Workbook, load_workbook
 
-from apps.usuarios.models import Usuario
+from apps.usuarios.models import AceptacionTerminos, Usuario
 
 from . import importacion
 from .models import EstadoCuraduria, Nivel, NodoActivo, Origen
@@ -119,6 +120,7 @@ class ImportacionTests(TestCase):
 class AdminImportacionTests(TestCase):
     def setUp(self):
         self.admin = Usuario.objects.create_superuser("jefe", password="x")
+        AceptacionTerminos.objects.create(usuario=self.admin, version=settings.TERMINOS_VERSION)
         self.client.force_login(self.admin)
 
     def test_recorrido_completo(self):

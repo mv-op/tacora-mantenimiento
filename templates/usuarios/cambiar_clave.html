@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block titulo %}Cambiar contraseña · Mantenimiento{% endblock %}
+
+{% block contenido %}
+  <div class="mx-auto mt-6 max-w-sm rounded-2xl bg-white p-6 shadow">
+    <h1 class="text-2xl font-bold">{% if primera_vez %}Defina su contraseña{% else %}Cambiar contraseña{% endif %}</h1>
+    {% if primera_vez %}
+      <p class="mt-2 text-slate-600">Es su primer ingreso. Cambie la contraseña inicial por una propia que solo usted conozca.</p>
+    {% endif %}
+
+    {% if errores %}
+      <div class="mt-4 rounded-xl bg-red-100 p-4 text-red-800">
+        <ul class="list-disc pl-5">{% for e in errores %}<li>{{ e }}</li>{% endfor %}</ul>
+      </div>
+    {% endif %}
+
+    <form method="post" autocomplete="off" class="mt-6 space-y-4">
+      {% csrf_token %}
+      {% if not primera_vez %}
+        <label class="block">
+          <span class="text-lg font-semibold">Contraseña actual</span>
+          <input name="actual" type="password" required autocomplete="off" data-lpignore="true"
+                 class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-4 text-lg">
+        </label>
+      {% endif %}
+      <label class="block">
+        <span class="text-lg font-semibold">Contraseña nueva</span>
+        <input name="nueva" type="password" required autofocus autocomplete="off" data-lpignore="true"
+               class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-4 text-lg">
+      </label>
+      <label class="block">
+        <span class="text-lg font-semibold">Repítala</span>
+        <input name="confirmacion" type="password" required autocomplete="off" data-lpignore="true"
+               class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-4 text-lg">
+      </label>
+      <p class="text-sm text-slate-500">Mínimo 8 caracteres, no solo números y distinta de la contraseña inicial.</p>
+      <button type="submit" class="w-full rounded-xl bg-blue-600 px-6 py-4 text-lg font-semibold text-white">Guardar contraseña</button>
+    </form>
+  </div>
+{% endblock %}

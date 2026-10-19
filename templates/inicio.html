@@ -2,20 +2,23 @@
 
 {% block contenido %}
   <div class="rounded-2xl bg-white p-6 shadow">
-    <h1 class="text-2xl font-bold">CMMS Tecnosur Mantenimiento</h1>
-    <p class="mt-2 text-slate-600">Hora del servidor (Bogotá): {{ ahora|date:"j \d\e F \d\e Y, H:i" }}</p>
+    <h1 class="text-2xl font-bold">Hola, {{ user }}</h1>
+    {% if user.rol == "operador" %}
+      <p class="mt-2 text-slate-600">Aquí estará el reporte de fallas (Fase 4).</p>
+    {% elif user.rol == "coordinador" %}
+      <p class="mt-2 text-slate-600">Aquí estará la bandeja de reportes de sus máquinas (Fase 5).</p>
+    {% elif user.rol == "tecnico" %}
+      <p class="mt-2 text-slate-600">Aquí estarán sus órdenes de trabajo (Fase 5).</p>
+    {% else %}
+      <p class="mt-2 text-slate-600">La administración se hace desde el admin.</p>
+    {% endif %}
 
     <div class="mt-6 flex flex-wrap gap-3">
-      <a href="{% url 'admin:index' %}" class="rounded-xl bg-blue-600 px-6 py-4 text-lg font-semibold text-white">Ir al admin</a>
-      <button hx-get="{% url 'inicio' %}" hx-select="#prueba-htmx" hx-target="#prueba-htmx" hx-swap="outerHTML"
-              class="rounded-xl bg-slate-200 px-6 py-4 text-lg font-semibold">Probar HTMX</button>
+      {% if user.is_staff %}
+        <a href="{% url 'admin:index' %}" class="rounded-xl bg-blue-600 px-6 py-4 text-lg font-semibold text-white">Ir al admin</a>
+      {% endif %}
+      <a href="{% url 'cambiar_clave' %}" class="rounded-xl bg-slate-200 px-6 py-4 text-lg font-semibold">Cambiar contraseña</a>
+      <a href="{% url 'terminos' %}" class="rounded-xl bg-slate-200 px-6 py-4 text-lg font-semibold">Ver términos</a>
     </div>
-    {% if es_htmx %}
-      <p id="prueba-htmx" class="mt-4 rounded-xl bg-green-100 p-4 text-lg font-semibold text-green-800">
-        ✓ HTMX funciona. Respuesta del servidor a las {{ ahora|date:"H:i:s" }}
-      </p>
-    {% else %}
-      <p id="prueba-htmx" class="mt-4 rounded-xl bg-slate-100 p-4 text-lg text-slate-500">Aún no has probado HTMX.</p>
-    {% endif %}
   </div>
 {% endblock %}

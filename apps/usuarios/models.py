@@ -1,7 +1,7 @@
 from django.conf import settings
-from django.contrib.auth.hashers import check_password, make_password
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, UserManager
 from django.db import models
+from django.utils import timezone
 
 
 class Rol(models.TextChoices):
@@ -11,15 +11,24 @@ class Rol(models.TextChoices):
     ADMIN = "admin", "Administrador"
 
 
+class UsuarioManager(UserManager):
+    def create_superuser(self, username, email=None, password=None, **extra_fields):
+        # Quien crea un superusuario por consola elige su propia contraseña.
+        extra_fields.setdefault("rol", Rol.ADMIN)
+        extra_fields.setdefault("debe_cambiar_clave", False)
+        return super().create_superuser(username, email, password, **extra_fields)
+
+
 class Usuario(AbstractUser):
     """Usuario del sistema. Se usa `is_active` de Django para activar o desactivar."""
 
     rol = models.CharField("rol", max_length=20, choices=Rol.choices, default=Rol.OPERADOR)
     nombre_visible = models.CharField("nombre visible", max_length=120, blank=True)
     debe_cambiar_clave = models.BooleanField("debe cambiar clave", default=True)
-    pin = models.CharField("PIN (hash)", max_length=128, blank=True)
     intentos_fallidos = models.PositiveSmallIntegerField("intentos fallidos", default=0)
     bloqueado_hasta = models.DateTimeField("bloqueado hasta", null=True, blank=True)
+
+    objects = UsuarioManager()
 
     class Meta:
         verbose_name = "usuario"
@@ -28,15 +37,9 @@ class Usuario(AbstractUser):
     def __str__(self):
         return self.nombre_visible or self.get_full_name() or self.username
 
-    def set_pin(self, pin_plano):
-        self.pin = make_password(pin_plano)
-
-    def check_pin(self, pin_plano):
-        return bool(self.pin) and check_password(pin_plano, self.pin)
-
     @property
-    def tiene_pin(self):
-        return bool(self.pin)
+    def esta_bloqueado(self):
+        return bool(self.bloqueado_hasta and self.bloqueado_hasta > timezone.now())
 
 
 class AceptacionTerminos(models.Model):

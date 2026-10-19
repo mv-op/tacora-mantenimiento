@@ -14,6 +14,8 @@ env = environ.Env(
     ALLOWED_HOSTS=(list, []),
     CSRF_TRUSTED_ORIGINS=(list, []),
     DATA_DIR=(str, str(BASE_DIR.parent / "tacora-mantenimiento-data")),
+    SESION_INACTIVIDAD_MINUTOS=(int, 15),
+    TERMINOS_VERSION=(str, "1"),
 )
 environ.Env.read_env(BASE_DIR / ".env")
 
@@ -55,6 +57,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "simple_history.middleware.HistoryRequestMiddleware",
+    "apps.usuarios.middleware.AccesoMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -69,6 +72,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "apps.usuarios.context_processors.sesion",
             ],
         },
     },
@@ -103,10 +107,32 @@ AUTH_USER_MODEL = "usuarios.Usuario"
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", "OPTIONS": {"min_length": 8}},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+    {"NAME": "apps.usuarios.validadores.DistintaDeLaInicial"},
 ]
+
+LOGIN_URL = "ingresar"
+LOGIN_REDIRECT_URL = "inicio"
+
+# Contraseña inicial común: se asigna al crear o restablecer un usuario y se cambia en el primer ingreso.
+CLAVE_INICIAL = env("CLAVE_INICIAL")
+
+# Bloqueo tras intentos fallidos.
+INTENTOS_MAXIMOS = 5
+MINUTOS_BLOQUEO = 15
+
+
+# Sesión: se cierra al cerrar el navegador y tras un tiempo sin uso.
+
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESION_INACTIVIDAD_MINUTOS = env("SESION_INACTIVIDAD_MINUTOS")
+
+
+# Términos de uso: al subir la versión, todos deben aceptar de nuevo.
+
+TERMINOS_VERSION = env("TERMINOS_VERSION")
 
 
 # Idioma y zona horaria: todo en hora Bogotá.

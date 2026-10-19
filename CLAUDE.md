@@ -30,7 +30,7 @@ El plan completo está en `docs/PLAN.md`. Léelo antes de empezar cualquier tare
 - Sin `<select>`: toda elección se hace con botones grandes o tarjetas.
 - Todo botón de envío se bloquea al primer clic y muestra "Enviando…".
 - Encabezado fijo en todas las pantallas: reloj grande (hora Bogotá), nombre y rol del usuario, campana de notificaciones.
-- Ingreso con usuario + PIN; la sesión se cierra por inactividad (15 min por defecto, configurable).
+- Ingreso con usuario + contraseña. Contraseña inicial común (`CLAVE_INICIAL` en `.env`) que cada usuario cambia en su primer ingreso. Bloqueo de 15 min tras 5 intentos fallidos. La sesión se cierra por inactividad (15 min por defecto, `SESION_INACTIVIDAD_MINUTOS` en `.env`) y al cerrar el navegador.
 - Árbol de activos en una sola tabla `NodoActivo` con `nivel` y `padre` (Máquina → Unidad → Sistema → Equipo → Componente). Nunca se borra: se desactiva con `is_active=False`.
 - Cada cambio de estado de un ticket pasa por una función de servicio que valida la transición y crea un `EventoTicket`. Las vistas no cambian el estado directamente.
 - Todas las notificaciones se crean desde una sola función `notificar()`. Solo notificaciones dentro de la app (sin correo).

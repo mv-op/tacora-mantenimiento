@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block titulo %}Ingresar · Mantenimiento{% endblock %}
+
+{% block contenido %}
+  <div class="mx-auto mt-6 max-w-sm rounded-2xl bg-white p-6 shadow">
+    <h1 class="text-2xl font-bold">Ingresar</h1>
+    <p class="mt-1 text-slate-600">CMMS Tecnosur Mantenimiento</p>
+
+    {% if error %}<div class="mt-4 rounded-xl bg-red-100 p-4 text-red-800">{{ error }}</div>{% endif %}
+
+    {# autocomplete="off": se le pide al navegador que no guarde la contraseña. #}
+    <form method="post" autocomplete="off" class="mt-6 space-y-4">
+      {% csrf_token %}
+      {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+      <label class="block">
+        <span class="text-lg font-semibold">Usuario</span>
+        <input name="usuario" value="{{ usuario_escrito }}" required autofocus autocomplete="off"
+               autocapitalize="none" spellcheck="false" data-lpignore="true"
+               class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-4 text-lg">
+      </label>
+      <label class="block">
+        <span class="text-lg font-semibold">Contraseña</span>
+        <input name="clave" type="password" required autocomplete="off" data-lpignore="true"
+               class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-4 text-lg">
+      </label>
+      <button type="submit" class="w-full rounded-xl bg-blue-600 px-6 py-4 text-lg font-semibold text-white">Ingresar</button>
+    </form>
+  </div>
+{% endblock %}

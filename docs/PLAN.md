@@ -15,7 +15,7 @@ Se construye un CMMS nuevo e independiente de Tacora, con la misma estructura t�
 | Historial para analítica | Tabla `EventoTicket` además de `django-simple-history` | Calcular MTTR, tiempos por estado y rechazos |
 | SLA | Ajustable por el coordinador, en horas, calculado desde fechas | Crítica se mide en horas; los retrasos no se guardan |
 | Anti-duplicados | UUID generado en el navegador + bloqueo del botón con HTMX | Evita tickets dobles por red inestable o reenvío offline |
-| Acceso | Usuario + PIN; cierre de sesión por inactividad | Entrada rápida en planta sin dejar sesiones abiertas |
+| Acceso | Usuario + contraseña; contraseña inicial común con cambio obligatorio; cierre por inactividad | Simple de administrar, sin sesiones abiertas |
 | Texto para IA | Texto libre crudo + metadatos; mínimo de caracteres; dictado por voz del teléfono | Datos útiles para LLM y búsqueda semántica |
 | Agente | Primero reglas programadas; luego resumen con LLM | Más barato, confiable y auditable |
 
@@ -47,7 +47,7 @@ El modelo se diseña completo desde la Fase 1, incluyendo lo que necesitan los d
 
 | Tabla | Campos clave | Para qué sirve |
 | --- | --- | --- |
-| `Usuario` (extiende `AbstractUser`) | rol, nombre visible, debe\_cambiar\_clave, pin (hash), intentos\_fallidos, bloqueado\_hasta, activo | Los cuatro roles y el primer login obligatorio |
+| `Usuario` (extiende `AbstractUser`) | rol, nombre visible, debe\_cambiar\_clave, intentos\_fallidos, bloqueado\_hasta (activo = `is_active` de Django) | Los cuatro roles y el primer login obligatorio |
 | `AceptacionTerminos` | usuario, versión, fecha, IP, user agent | Cumplimiento legal y autorización de datos personales |
 | `NodoActivo` | nombre, nombre\_normalizado, nivel (Máquina…Componente), padre, origen (Excel / operador), estado\_curaduría, is\_active, fusionado\_en | Árbol único de cinco niveles con soft-delete |
 | `CoordinadorMaquina` | coordinador, máquina | Qué máquinas ve cada coordinador |
@@ -147,11 +147,11 @@ Encabezado fijo en todas las pantallas: reloj grande con hora de Bogotá (horas 
 | Operador | Celular o PC | Mosaico de botones Máquina → Unidad → Sistema → Equipo → Componente, con "+ Crear nuevo" y autocompletado difuso al final de cada nivel · descripción en texto libre · tres botones de criticidad · "Mis reportes" con su estado · borrador guardado en `localStorage` y reenvío con UUID al volver la conexión |
 | Coordinador | Escritorio o tablet | Bandeja de reportes de sus máquinas ordenada por criticidad y SLA · tarjetas de técnicos con número de tareas activas · respuesta a contra-reportes · validar o rechazar cierres · ajuste de SLA por criticidad · vista de historial por máquina |
 | Técnico | Celular | "Mis órdenes" con cronómetro y semáforo · iniciar, pausar con contra-reporte, finalizar · formulario de cierre con tres campos, mínimo de caracteres y dictado por voz del teclado |
-| Administrador | Django Admin | Usuarios y roles · asignación coordinador–máquinas · importación del Excel · exportación a CSV · curaduría de nodos pendientes · acción de fusión (merge) · reglas SLA · versiones de términos |
+| Administrador | Django Admin | Usuarios y roles (crear con contraseña inicial, restablecer, desbloquear) · asignación coordinador–máquinas · importación del Excel · exportación a CSV · curaduría de nodos pendientes · acción de fusión (merge) · reglas SLA · aceptaciones de términos |
 
-Ingreso con PIN: la primera vez el usuario entra con usuario y clave temporal, y define su clave y un PIN de 4 a 6 dígitos. Después, el dispositivo recuerda el usuario y solo pide el PIN. Tras 5 intentos fallidos se bloquea 15 minutos.
+Ingreso: usuario y contraseña. Al crear un usuario se le asigna la contraseña inicial común (definida en `.env`); en su primer ingreso debe cambiarla por una propia (mínimo 8 caracteres, no solo números, distinta de la inicial) y aceptar los términos. Si la olvida, el administrador la restablece a la inicial. Tras 5 intentos fallidos se bloquea 15 minutos. Se le pide al navegador no guardar la contraseña; en PC compartidos conviene desactivar el gestor de contraseñas del navegador por política de Windows.
 
-Cierre por inactividad: la sesión se cierra tras 15 minutos sin uso (ajustable por el administrador). Un minuto antes aparece un aviso con botón "Seguir conectado". Si hay un reporte a medio escribir, el borrador se conserva en el navegador.
+Cierre por inactividad: la sesión se cierra tras 15 minutos sin uso (ajustable en `.env`) y al cerrar el navegador. Las consultas automáticas, como la campana, no cuentan como uso. Un minuto antes aparece un aviso con botón "Seguir conectado". Si hay un reporte a medio escribir, el borrador se conserva en el navegador.
 
 Fusión de nodos: el administrador elige el nodo correcto y el duplicado. En una sola transacción se mueven los tickets y los nodos hijos al nodo correcto, se marca el duplicado como inactivo con `fusionado_en`, y queda el registro en el historial.
 
@@ -166,8 +166,8 @@ Cada fase termina con algo que funciona y se prueba antes de pasar a la siguient
    - Todas las tablas de la sección Modelo de datos, migraciones, admin con historial, plantilla e importación del árbol desde Excel, reglas SLA iniciales.
    - Listo cuando: el Excel real de Tecnosur carga sin errores y el árbol se ve en el admin.
 3. **Acceso y cumplimiento**
-   - Primer ingreso con clave temporal, definición de clave y PIN, ingreso diario con PIN, cierre por inactividad, aceptación de términos genéricos con registro, encabezado con reloj y usuario.
-   - Listo cuando: un usuario nuevo no entra sin definir clave y PIN y aceptar términos, y la sesión se cierra sola al quedar sin uso.
+   - Primer ingreso con contraseña inicial común, cambio obligatorio de contraseña, bloqueo por intentos, cierre por inactividad, aceptación de términos genéricos con registro (versión en `.env`), encabezado con reloj y usuario.
+   - Listo cuando: un usuario nuevo no entra sin cambiar la contraseña y aceptar términos, y la sesión se cierra sola al quedar sin uso.
 4. **Pantalla del operador**
    - Mosaico de botones, creación de nodos con autocompletado difuso, reporte con criticidad, borrador offline y UUID.
    - Listo cuando: un reporte enviado dos veces por red lenta crea un solo ticket.
@@ -193,7 +193,7 @@ Cada fase termina con algo que funciona y se prueba antes de pasar a la siguient
 - [x] Servidor: misma VM de Tacora al inicio.
 - [x] SLA: ajustable por el coordinador.
 - [x] Términos de uso: texto genérico en la primera versión.
-- [x] Acceso: usuario + PIN para todos, cierre por inactividad. Por ahora no hay tablets compartidas.
+- [x] Acceso: usuario + contraseña (sin PIN), contraseña inicial común con cambio obligatorio, cierre por inactividad. Decidido el 19 de octubre de 2026.
 - [x] Dominio: tecnosur.mantenimiento.tacorapp.com.
 - [ ] Enviar el Excel del árbol de Tecnosur, o usar la plantilla que se genera en la Fase 2.
 - [ ] Más adelante: revisión legal de los términos y la autorización de datos (Ley 1581).
