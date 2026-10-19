@@ -1,0 +1,21 @@
+[Unit]
+Description=CMMS Tecnosur Mantenimiento (Gunicorn)
+After=network.target
+
+[Service]
+User=imrodriguez
+Group=www-data
+WorkingDirectory=/home/imrodriguez/tacora-mantenimiento
+# systemd crea /run/mantenimiento/ para el socket y la borra al detener el servicio.
+RuntimeDirectory=mantenimiento
+RuntimeDirectoryMode=0755
+ExecStart=/home/imrodriguez/tacora-mantenimiento/.venv/bin/gunicorn \
+          --workers 3 \
+          --timeout 120 \
+          --bind unix:/run/mantenimiento/gunicorn.sock \
+          config.wsgi:application
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

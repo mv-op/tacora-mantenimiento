@@ -1,0 +1,9 @@
+[Unit]
+Description=CMMS Mantenimiento: respaldo diario a las 2:00 a. m.
+
+[Timer]
+OnCalendar=*-*-* 02:00:00 America/Bogota
+Persistent=true
+
+[Install]
+WantedBy=timers.target

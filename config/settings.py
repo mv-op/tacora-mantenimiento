@@ -166,8 +166,23 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+    # HSTS corto durante el piloto (1 día); se puede subir a un año cuando el HTTPS esté estable.
+    SECURE_HSTS_SECONDS = 86400
+
+
+# Registro: los errores van a la salida estándar y systemd los guarda en el journal
+# (en el servidor: journalctl -u mantenimiento).
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {"simple": {"format": "{levelname} {name}: {message}", "style": "{"}},
+    "handlers": {"consola": {"class": "logging.StreamHandler", "formatter": "simple"}},
+    "loggers": {"django": {"handlers": ["consola"], "level": "WARNING"}},
+}
 
 # Página clara (en lugar de la técnica de Django) cuando un formulario quedó viejo.
 CSRF_FAILURE_VIEW = "apps.core.views.fallo_csrf"

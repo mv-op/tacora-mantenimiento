@@ -83,7 +83,7 @@ En otra terminal, si se quieren avisos de plazos:
 
 ## 5. Fase 7 — Lo que haremos mañana
 
-### Parte A — La hago yo (Claude), en el repositorio
+### Parte A — ✅ Lista (carpeta `deploy/`, ver `deploy/GUIA.md`)
 1. Carpeta `deploy/` con:
    - `mantenimiento.service` + `mantenimiento.socket` (Gunicorn con socket propio).
    - `mantenimiento-sla.service` + `.timer` (revisar plazos cada 5 min).
@@ -102,7 +102,7 @@ En otra terminal, si se quieren avisos de plazos:
 **Condición de cierre de la Fase 7:** el piloto opera una semana sin pérdida de reportes.
 
 ### Preguntas pendientes para empezar mañana
-- ¿Qué sistema operativo tiene la VM? (en el servidor: `cat /etc/os-release`)
+- ✅ VM: Debian 13 (trixie), Python 3.13.5, usuario `imrodriguez`. Entra por SSH el usuario.
 - ¿Quién entra por SSH al servidor: tú u otra persona?
 - ¿Se pueden copiar el `.service` y el bloque de Nginx de Tacora? Así los archivos quedan iguales a lo que ya funciona (rutas, usuario del sistema, estilo).
 - ¿Qué versión de Python tiene la VM? (`python3 --version`). En local usamos 3.13.

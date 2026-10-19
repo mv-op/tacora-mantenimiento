@@ -1,0 +1,8 @@
+[Unit]
+Description=CMMS Mantenimiento: revisar plazos (SLA)
+
+[Service]
+Type=oneshot
+User=imrodriguez
+WorkingDirectory=/home/imrodriguez/tacora-mantenimiento
+ExecStart=/home/imrodriguez/tacora-mantenimiento/.venv/bin/python manage.py revisar_sla

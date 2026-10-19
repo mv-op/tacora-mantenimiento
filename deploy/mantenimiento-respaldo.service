@@ -1,0 +1,7 @@
+[Unit]
+Description=CMMS Mantenimiento: respaldo diario de la base SQLite
+
+[Service]
+Type=oneshot
+User=imrodriguez
+ExecStart=/home/imrodriguez/tacora-mantenimiento/deploy/respaldo.sh
