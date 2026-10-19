@@ -1,0 +1,23 @@
+{% extends "_base_app.html" %}
+{% block titulo %}Mis órdenes · Mantenimiento{% endblock %}
+
+{% block paso %}
+  <h1 class="text-2xl font-bold">Mis órdenes</h1>
+
+  <div class="mt-4 space-y-3">
+    {% for ticket in activas %}
+      {% include "tickets/_tarjeta.html" with destino="orden" %}
+    {% empty %}
+      <p class="rounded-2xl bg-white p-6 text-center text-slate-500 shadow">No tiene órdenes pendientes.</p>
+    {% endfor %}
+  </div>
+
+  {% if por_validar %}
+    <h2 class="mt-8 text-xl font-bold">Esperando validación del coordinador</h2>
+    <div class="mt-3 space-y-3">
+      {% for ticket in por_validar %}
+        {% include "tickets/_tarjeta.html" with destino="orden" %}
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endblock %}

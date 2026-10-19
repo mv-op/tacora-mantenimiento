@@ -2,7 +2,7 @@
 {# hx-boost: los enlaces y formularios cargan la página por detrás y solo cambian #paso (sin recargar). #}
 {% block mensajes %}{% endblock %}
 {% block contenido %}
-  <div hx-boost="true" hx-target="#paso" hx-select="#paso" hx-swap="outerHTML show:window:top">
+  <div hx-boost="true" hx-target="#paso" hx-select="#paso" hx-swap="outerHTML show:window:top" hx-select-oob="#menu">
     <div id="paso">
       {% include "_mensajes.html" %}
       {% block paso %}{% endblock %}

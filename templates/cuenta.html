@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block titulo %}Cuenta · Mantenimiento{% endblock %}
+
+{% block contenido %}
+  <div class="rounded-2xl bg-white p-6 shadow">
+    <h1 class="text-2xl font-bold">{{ user }}</h1>
+    <p class="text-slate-600">{{ user.get_rol_display }} · usuario «{{ user.username }}»</p>
+
+    <div class="mt-6 grid gap-3 sm:grid-cols-2">
+      {% if user.is_staff %}
+        <a href="{% url 'admin:index' %}" class="rounded-xl bg-blue-600 px-6 py-4 text-center text-lg font-semibold text-white">Ir al admin</a>
+      {% endif %}
+      <a href="{% url 'cambiar_clave' %}" class="rounded-xl bg-slate-200 px-6 py-4 text-center text-lg font-semibold">Cambiar contraseña</a>
+      <a href="{% url 'terminos' %}" class="rounded-xl bg-slate-200 px-6 py-4 text-center text-lg font-semibold">Ver términos</a>
+    </div>
+  </div>
+{% endblock %}

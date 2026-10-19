@@ -1,0 +1,30 @@
+{% extends "_base_app.html" %}
+{% block titulo %}{{ maquina.nombre }} · Historial · Mantenimiento{% endblock %}
+
+{% block paso %}
+  <a href="{% url 'maquinas' %}" class="mb-4 inline-block rounded-lg bg-white px-3 py-2 font-semibold shadow">‹ Máquinas</a>
+  <h1 class="text-2xl font-bold">{{ maquina.nombre }}</h1>
+  <p class="text-slate-600">{{ tickets|length }} reporte{{ tickets|length|pluralize }}, del más reciente al más antiguo.</p>
+
+  <div class="mt-4 space-y-3">
+    {% for ticket in tickets %}
+      <a href="{% url 'bandeja_ticket' ticket.pk %}" class="block rounded-2xl bg-white p-4 shadow">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="font-bold">#{{ ticket.pk }}</span>
+          {% include "operador/_criticidad.html" %}
+          {% include "operador/_estado.html" %}
+          <span class="text-sm text-slate-500">{{ ticket.reportado_en|date:"j M Y" }}</span>
+        </div>
+        <div class="mt-2 font-semibold">{{ ticket.nodo.ruta }}</div>
+        <div class="line-clamp-2 text-slate-600">{{ ticket.descripcion }}</div>
+        {% if ticket.ultimo_cierre %}
+          <div class="mt-2 rounded-lg bg-teal-50 p-2 text-sm text-teal-900">
+            <strong>Causa raíz:</strong> {{ ticket.ultimo_cierre.causa_raiz|truncatechars:140 }}
+          </div>
+        {% endif %}
+      </a>
+    {% empty %}
+      <p class="rounded-2xl bg-white p-6 text-center text-slate-500 shadow">Esta máquina aún no tiene reportes.</p>
+    {% endfor %}
+  </div>
+{% endblock %}

@@ -26,6 +26,7 @@ class Estado(models.TextChoices):
 class TipoEvento(models.TextChoices):
     CREAR = "crear", "Reporte creado"
     ASIGNAR = "asignar", "Asignado a técnico"
+    REASIGNAR = "reasignar", "Reasignado a otro técnico"
     INICIAR = "iniciar", "Trabajo iniciado"
     PAUSAR = "pausar", "Pausado (contra-reporte)"
     REANUDAR = "reanudar", "Reanudado"

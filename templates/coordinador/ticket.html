@@ -1,0 +1,93 @@
+{% extends "_base_app.html" %}
+{% load tickets %}
+{% block titulo %}Ticket #{{ ticket.pk }} · Mantenimiento{% endblock %}
+
+{% block paso %}
+  <a href="{% url 'bandeja' %}" class="mb-4 inline-block rounded-lg bg-white px-3 py-2 font-semibold shadow">‹ Bandeja</a>
+
+  <div class="rounded-2xl bg-white p-6 shadow">
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="text-xl font-bold">#{{ ticket.pk }}</span>
+      {% include "operador/_criticidad.html" %}
+      {% include "operador/_estado.html" %}
+    </div>
+    <div class="mt-3 text-lg font-semibold">{{ ticket.nodo.ruta }}</div>
+    <p class="mt-2 whitespace-pre-line text-slate-800">{{ ticket.descripcion }}</p>
+    <p class="mt-2 text-sm text-slate-500">
+      Reportó {{ ticket.reportado_por }} · {{ ticket.reportado_en|date:"j M Y, H:i" }}
+      {% if ticket.tecnico %} · Técnico: <strong>{{ ticket.tecnico }}</strong>{% endif %}
+    </p>
+    <div class="mt-4">{% include "tickets/_semaforo.html" %}</div>
+    {% if pausa.total_seconds %}<p class="mt-2 text-sm text-slate-600">Tiempo en pausa: {{ pausa|duracion }}</p>{% endif %}
+
+    {# Asignar o reasignar: tarjetas de técnicos con su carga. #}
+    {% if tecnicos %}
+      <h2 class="mt-6 text-lg font-bold">{% if "asignar" in acciones %}Asignar técnico{% else %}Reasignar a otro técnico{% endif %}</h2>
+      <div class="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3">
+        {% for tecnico in tecnicos %}
+          {% if tecnico.pk != ticket.tecnico_id %}
+            <form method="post" action="{% url 'bandeja_asignar' ticket.pk %}">
+              {% csrf_token %}
+              <input type="hidden" name="tecnico" value="{{ tecnico.pk }}">
+              <input type="hidden" name="tipo" value="{% if 'asignar' in acciones %}asignar{% else %}reasignar{% endif %}">
+              <button type="submit" class="h-full w-full rounded-2xl border-2 border-indigo-200 bg-indigo-50 p-4 text-left active:bg-indigo-100">
+                <span class="block text-lg font-semibold">{{ tecnico }}</span>
+                <span class="block text-sm text-slate-600">{{ tecnico.carga }} tarea{{ tecnico.carga|pluralize }} activa{{ tecnico.carga|pluralize }}</span>
+              </button>
+            </form>
+          {% endif %}
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {# Contra-reporte: responder y reanudar. #}
+    {% if "reanudar" in acciones and contra_reporte %}
+      <div class="mt-6 rounded-2xl bg-orange-50 p-4">
+        <h2 class="text-lg font-bold text-orange-900">Contra-reporte de {{ contra_reporte.tecnico }}</h2>
+        <p class="text-sm text-orange-800">{{ contra_reporte.fecha|date:"j M, H:i" }}</p>
+        <p class="mt-1 whitespace-pre-line">{{ contra_reporte.motivo }}</p>
+        <form method="post" action="{% url 'bandeja_accion' ticket.pk 'responder' %}" class="mt-3 space-y-3">
+          {% csrf_token %}
+          <textarea name="comentario" rows="3" required placeholder="Su respuesta al técnico (mínimo {{ minimo }} caracteres)"
+                    class="w-full rounded-xl border border-slate-300 px-4 py-3 text-lg"></textarea>
+          <button type="submit" class="w-full rounded-xl bg-green-600 px-6 py-4 text-lg font-bold text-white">Responder y reanudar el trabajo</button>
+        </form>
+      </div>
+    {% endif %}
+
+    {# Cierre: validar o rechazar. #}
+    {% include "tickets/_cierres.html" %}
+    {% if "validar" in acciones %}
+      <div class="mt-4 space-y-3">
+        <form method="post" action="{% url 'bandeja_accion' ticket.pk 'validar' %}">
+          {% csrf_token %}
+          <button type="submit" class="w-full rounded-xl bg-green-600 px-6 py-5 text-xl font-bold text-white">Validar y cerrar</button>
+        </form>
+        <details class="rounded-2xl bg-red-50 p-4">
+          <summary class="cursor-pointer text-lg font-semibold text-red-800">Rechazar el cierre…</summary>
+          <form method="post" action="{% url 'bandeja_accion' ticket.pk 'rechazar' %}" class="mt-3 space-y-3">
+            {% csrf_token %}
+            <textarea name="comentario" rows="3" required placeholder="¿Por qué se rechaza? (mínimo {{ minimo }} caracteres)"
+                      class="w-full rounded-xl border border-slate-300 px-4 py-3 text-lg"></textarea>
+            <button type="submit" class="w-full rounded-xl bg-red-600 px-6 py-4 text-lg font-bold text-white">Rechazar y devolver al técnico</button>
+          </form>
+        </details>
+      </div>
+    {% endif %}
+
+    {# Anular: solo desde Reportado, con motivo. #}
+    {% if "anular" in acciones %}
+      <details class="mt-6 rounded-2xl bg-slate-100 p-4">
+        <summary class="cursor-pointer text-lg font-semibold text-slate-700">Anular este reporte (duplicado o improcedente)…</summary>
+        <form method="post" action="{% url 'bandeja_accion' ticket.pk 'anular' %}" class="mt-3 space-y-3">
+          {% csrf_token %}
+          <textarea name="comentario" rows="2" required placeholder="Motivo de la anulación (mínimo {{ minimo }} caracteres)"
+                    class="w-full rounded-xl border border-slate-300 px-4 py-3 text-lg"></textarea>
+          <button type="submit" class="w-full rounded-xl bg-slate-700 px-6 py-4 text-lg font-bold text-white">Anular</button>
+        </form>
+      </details>
+    {% endif %}
+
+    {% include "tickets/_historial.html" %}
+  </div>
+{% endblock %}

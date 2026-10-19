@@ -1,0 +1,52 @@
+{% extends "_base_app.html" %}
+{% block titulo %}Bandeja · Mantenimiento{% endblock %}
+
+{% block paso %}
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <h1 class="text-2xl font-bold">Bandeja de reportes</h1>
+    <div class="flex gap-2">
+      <a href="{% url 'maquinas' %}" class="rounded-xl bg-white px-4 py-3 font-semibold shadow">Historial por máquina</a>
+      <a href="{% url 'ajustar_sla' %}" class="rounded-xl bg-white px-4 py-3 font-semibold shadow">Ajustar SLA</a>
+    </div>
+  </div>
+
+  {% if not maquinas %}
+    <div class="mt-4 rounded-2xl bg-amber-100 p-5 text-amber-900">
+      <div class="text-lg font-bold">Aún no tiene máquinas asignadas</div>
+      <div class="mt-1">Pida al administrador que le asigne sus máquinas (en su ficha de usuario, «Máquinas que coordina»). Mientras tanto no verá reportes.</div>
+    </div>
+  {% else %}
+    <details class="mt-1 text-slate-600">
+      <summary class="cursor-pointer">Sus máquinas ({{ maquinas|length }})</summary>
+      <p class="mt-1">{% for m in maquinas %}{{ m.nombre }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+    </details>
+
+    {% for titulo, ayuda, tickets in secciones %}
+      <section class="mt-6">
+        <h2 class="text-xl font-bold">{{ titulo }} <span class="text-slate-400">({{ tickets|length }})</span></h2>
+        {% if ayuda and tickets %}<p class="text-sm text-slate-500">{{ ayuda }}</p>{% endif %}
+        <div class="mt-3 space-y-3">
+          {% for ticket in tickets %}
+            {% include "tickets/_tarjeta.html" with destino="bandeja_ticket" mostrar_tecnico=True %}
+          {% empty %}
+            <p class="rounded-2xl bg-white p-4 text-center text-slate-400 shadow">Nada aquí.</p>
+          {% endfor %}
+        </div>
+      </section>
+    {% endfor %}
+
+    <section class="mt-8">
+      <h2 class="text-xl font-bold">Técnicos</h2>
+      <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+        {% for tecnico in tecnicos %}
+          <div class="rounded-2xl bg-white p-4 shadow">
+            <div class="font-semibold">{{ tecnico }}</div>
+            <div class="text-sm text-slate-500">{{ tecnico.carga }} tarea{{ tecnico.carga|pluralize }} activa{{ tecnico.carga|pluralize }}</div>
+          </div>
+        {% empty %}
+          <p class="text-slate-500">No hay técnicos activos.</p>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+{% endblock %}

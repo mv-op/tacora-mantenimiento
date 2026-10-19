@@ -10,7 +10,9 @@
 </head>
 <body class="min-h-screen bg-slate-100 text-slate-900" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
       {% if user.is_authenticated %}data-usuario="{{ user.pk }}" data-url-enviar="{% url 'enviar_reporte' %}"{% endif %}>
-  <header class="sticky top-0 z-10 flex items-center justify-between gap-3 bg-slate-900 px-4 py-3 text-white">
+  {# Encabezado y menú fijos arriba (en el celular el menú se va abajo). #}
+  <div class="sticky top-0 z-10">
+  <header class="flex items-center justify-between gap-3 bg-slate-900 px-4 py-3 text-white">
     <div id="reloj" class="text-4xl font-bold tabular-nums sm:text-5xl" data-epoch-ms="{% now 'U' %}000">{% now "H:i" %}</div>
     {% if user.is_authenticated %}
       <div class="flex items-center gap-3">
@@ -31,8 +33,10 @@
       </div>
     {% endif %}
   </header>
+  {% include "_menu.html" %}
+  </div>
 
-  <main class="mx-auto max-w-3xl p-4">
+  <main class="mx-auto max-w-3xl p-4 {% if menu %}pb-24 sm:pb-4{% endif %}">
     {% block mensajes %}{% include "_mensajes.html" %}{% endblock %}
     {% block contenido %}{% endblock %}
   </main>
@@ -85,6 +89,7 @@
 
   {% if user.is_authenticated %}
   <script src="{% static 'js/reportes.js' %}"></script>
+  <script src="{% static 'js/cronometro.js' %}"></script>
   <script>
     // Cierre por inactividad. El servidor es quien manda; aquí solo se avisa un minuto antes.
     // Tocar o escribir cuenta como uso y se informa al servidor como máximo una vez por minuto.

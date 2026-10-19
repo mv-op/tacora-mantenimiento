@@ -1,0 +1,16 @@
+{% load tickets %}
+{# Semáforo de SLA. cronometro.js actualiza el texto y el color cada pocos segundos. #}
+{% if s %}
+  <div class="rounded-xl px-3 py-2 text-sm font-semibold
+              {% if s.color == 'rojo' %}bg-red-600 text-white{% elif s.color == 'amarillo' %}bg-yellow-200 text-yellow-900{% else %}bg-green-100 text-green-800{% endif %}"
+       data-cronometro data-inicio="{{ s.inicio|epoch_ms }}" data-limite="{{ s.limite|epoch_ms }}"
+       {% if s.congelado %}data-congelado="{{ s.medido_en|epoch_ms }}"{% endif %}>
+    <span class="font-normal">{{ s.etiqueta }} {{ s.limite|date:"H:i" }}{% if s.limite|date:"Ymd" != s.medido_en|date:"Ymd" %} del {{ s.limite|date:"j M" }}{% endif %} ·</span>
+    <span data-texto>
+      {% if s.congelado %}
+        {% if s.restante.total_seconds >= 0 %}Resuelto a tiempo{% else %}Resuelto con {{ s.restante|duracion }} de retraso{% endif %}
+      {% elif s.restante.total_seconds >= 0 %}Quedan {{ s.restante|duracion }}
+      {% else %}Vencido hace {{ s.restante|duracion }}{% endif %}
+    </span>
+  </div>
+{% endif %}

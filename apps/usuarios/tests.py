@@ -108,12 +108,12 @@ class PrimerIngresoTests(TestCase):
         aceptacion = AceptacionTerminos.objects.get()
         self.assertEqual((aceptacion.version, aceptacion.ip, aceptacion.user_agent),
                          (settings.TERMINOS_VERSION, "190.1.2.3", "Celular de prueba"))
-        self.assertContains(self.client.get("/"), "Hola, Juan Pérez")
+        self.assertContains(self.client.get("/", follow=True), "Juan Pérez")
 
     def test_version_nueva_de_terminos_obliga_a_aceptar_otra_vez(self):
         listo_para_usar(self.u)
         self.client.force_login(self.u)
-        self.assertEqual(self.client.get("/").status_code, 200)
+        self.assertEqual(self.client.get("/cuenta/").status_code, 200)
         with override_settings(TERMINOS_VERSION="2"):
             self.assertRedirects(self.client.get("/"), "/terminos/?next=%2F", fetch_redirect_response=False)
 

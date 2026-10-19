@@ -1,0 +1,12 @@
+{% for cierre in cierres %}
+  <div class="mt-4 rounded-xl border border-slate-200 p-4 {% if forloop.last %}bg-teal-50{% else %}bg-slate-50 opacity-80{% endif %}">
+    <div class="font-bold">Cierre técnico · intento {{ cierre.intento }}{% if not forloop.last %} (rechazado){% endif %}</div>
+    <div class="text-sm text-slate-500">{{ cierre.creado_en|date:"j M Y, H:i" }} · {{ cierre.tecnico }}</div>
+    <dl class="mt-2 space-y-2">
+      <div><dt class="text-sm font-semibold text-slate-600">Causa raíz</dt><dd class="whitespace-pre-line">{{ cierre.causa_raiz }}</dd></div>
+      <div><dt class="text-sm font-semibold text-slate-600">Acción correctiva</dt><dd class="whitespace-pre-line">{{ cierre.accion_correctiva }}</dd></div>
+      {% if cierre.repuestos %}<div><dt class="text-sm font-semibold text-slate-600">Repuestos</dt><dd class="whitespace-pre-line">{{ cierre.repuestos }}</dd></div>{% endif %}
+      <div><dt class="text-sm font-semibold text-slate-600">Recomendación preventiva</dt><dd class="whitespace-pre-line">{{ cierre.recomendacion_preventiva }}</dd></div>
+    </dl>
+  </div>
+{% endfor %}

@@ -1,0 +1,14 @@
+{# Tarjeta de ticket para listas. Recibe `ticket` (con .sla) y `destino` (nombre de la URL del detalle). #}
+<a href="{% url destino ticket.pk %}" class="block rounded-2xl bg-white p-4 shadow active:bg-slate-50">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="font-bold">#{{ ticket.pk }}</span>
+    {% include "operador/_criticidad.html" %}
+    {% include "operador/_estado.html" %}
+  </div>
+  <div class="mt-2 text-lg font-semibold">{{ ticket.nodo.ruta }}</div>
+  <div class="line-clamp-2 text-slate-600">{{ ticket.descripcion }}</div>
+  <div class="mt-1 text-sm text-slate-500">
+    Reportado {{ ticket.reportado_en|date:"j M, H:i" }}{% if ticket.tecnico and mostrar_tecnico %} · Técnico: {{ ticket.tecnico }}{% endif %}
+  </div>
+  <div class="mt-3">{% include "tickets/_semaforo.html" with s=ticket.sla %}</div>
+</a>

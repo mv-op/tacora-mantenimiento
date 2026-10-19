@@ -109,10 +109,13 @@ class NodoActivoAdmin(SimpleHistoryAdmin):
             hijos.setdefault(nodo.padre_id, []).append(nodo)
         for nodo in nodos:
             nodo.lista_hijos = hijos.get(nodo.pk, [])
+        con_coordinador = set(CoordinadorMaquina.objects.values_list("maquina", flat=True))
         contexto = {
             **self.admin_site.each_context(request), "opts": self.model._meta, "title": "Árbol de activos",
             "maquinas": hijos.get(None, []), "total": len(nodos),
             "pendientes": sum(n.estado_curaduria == EstadoCuraduria.PENDIENTE for n in nodos),
+            # Los reportes de estas máquinas no le llegan a ningún coordinador.
+            "sin_coordinador": [m for m in hijos.get(None, []) if m.pk not in con_coordinador],
         }
         return TemplateResponse(request, "admin/activos/nodoactivo/arbol.html", contexto)
 

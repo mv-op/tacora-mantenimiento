@@ -109,6 +109,11 @@ class NodoActivo(models.Model):
         return list(reversed(cadena))
 
     @property
+    def maquina(self):
+        """La máquina (raíz) a la que pertenece este nodo."""
+        return self.ancestros[0]
+
+    @property
     def ruta(self):
         return " › ".join(n.nombre for n in self.ancestros)
 

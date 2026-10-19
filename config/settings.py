@@ -46,6 +46,8 @@ INSTALLED_APPS = [
     "apps.notificaciones",
     "apps.agente",
     "apps.operador",
+    "apps.tecnico",
+    "apps.coordinador",
 ]
 
 MIDDLEWARE = [
@@ -74,6 +76,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "apps.usuarios.context_processors.sesion",
+                "apps.core.context_processors.menu",
             ],
         },
     },
@@ -159,3 +162,6 @@ if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+
+# Página clara (en lugar de la técnica de Django) cuando un formulario quedó viejo.
+CSRF_FAILURE_VIEW = "apps.core.views.fallo_csrf"

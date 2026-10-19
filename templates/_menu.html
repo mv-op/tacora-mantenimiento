@@ -1,0 +1,17 @@
+{# Menú por rol: barra fija abajo en el celular, debajo del encabezado en el PC. #}
+{% if menu %}
+  <nav id="menu" aria-label="Menú"
+       class="fixed inset-x-0 bottom-0 z-10 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-2px_8px_rgba(0,0,0,0.06)]
+              sm:static sm:border-t-0 sm:border-b sm:pb-0 sm:shadow-sm">
+    <div class="mx-auto flex max-w-3xl">
+      {% for opcion, activa in menu %}
+        <a href="{% url opcion.url %}" {% if activa %}aria-current="page"{% endif %}
+           class="flex flex-1 items-center justify-center border-t-4 px-1 py-3 text-center text-sm font-semibold leading-tight
+                  sm:border-t-0 sm:border-b-4 sm:text-base
+                  {% if activa %}border-blue-600 bg-blue-50 text-blue-800{% else %}border-transparent text-slate-600 active:bg-slate-100{% endif %}">
+          {{ opcion.etiqueta }}
+        </a>
+      {% endfor %}
+    </div>
+  </nav>
+{% endif %}

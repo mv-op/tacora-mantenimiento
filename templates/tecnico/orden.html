@@ -1,0 +1,68 @@
+{% extends "_base_app.html" %}
+{% load tickets %}
+{% block titulo %}Orden #{{ ticket.pk }} · Mantenimiento{% endblock %}
+
+{% block paso %}
+  <a href="{% url 'mis_ordenes' %}" class="mb-4 inline-block rounded-lg bg-white px-3 py-2 font-semibold shadow">‹ Mis órdenes</a>
+
+  {% if rechazo %}
+    <div class="mb-4 rounded-2xl bg-red-100 p-4 text-red-900">
+      <div class="text-lg font-bold">El coordinador rechazó su cierre</div>
+      <div class="mt-1 whitespace-pre-line">{{ rechazo.comentario }}</div>
+      <div class="mt-1 text-sm">{{ rechazo.fecha|date:"j M, H:i" }} · {{ rechazo.actor }}. Debe escribir un cierre nuevo.</div>
+    </div>
+  {% endif %}
+
+  <div class="rounded-2xl bg-white p-6 shadow">
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="text-xl font-bold">#{{ ticket.pk }}</span>
+      {% include "operador/_criticidad.html" %}
+      {% include "operador/_estado.html" %}
+    </div>
+    <div class="mt-3 text-lg font-semibold">{{ ticket.nodo.ruta }}</div>
+    <p class="mt-2 whitespace-pre-line text-slate-800">{{ ticket.descripcion }}</p>
+    <p class="mt-2 text-sm text-slate-500">Reportó {{ ticket.reportado_por }} · {{ ticket.reportado_en|date:"j M Y, H:i" }}</p>
+
+    <div class="mt-4">{% include "tickets/_semaforo.html" %}</div>
+    <div class="mt-2 flex flex-wrap gap-x-4 text-sm text-slate-600">
+      {% if ticket.iniciado_en %}<span>Trabajando desde {{ ticket.iniciado_en|date:"j M, H:i" }}</span>{% endif %}
+      {% if pausa.total_seconds %}<span>Tiempo en pausa: {{ pausa|duracion }}</span>{% endif %}
+    </div>
+
+    {% if ticket.estado == "en_pausa" and contra_reporte %}
+      <div class="mt-4 rounded-xl bg-orange-50 p-4">
+        <div class="font-semibold text-orange-900">Su contra-reporte</div>
+        <div class="whitespace-pre-line">{{ contra_reporte.motivo }}</div>
+        {% if not contra_reporte.respondido_en %}<div class="mt-1 text-sm text-orange-800">Esperando respuesta del coordinador.</div>{% endif %}
+      </div>
+    {% endif %}
+
+    {# Botones grandes según lo que se puede hacer ahora. #}
+    <div class="mt-6 space-y-3">
+      {% if "iniciar" in acciones %}
+        <form method="post" action="{% url 'orden_iniciar' ticket.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="w-full rounded-xl bg-green-600 px-6 py-5 text-xl font-bold text-white">Iniciar trabajo</button>
+        </form>
+      {% endif %}
+      {% if "resolver" in acciones %}
+        <a href="{% url 'orden_finalizar' ticket.pk %}" class="block w-full rounded-xl bg-teal-600 px-6 py-5 text-center text-xl font-bold text-white">Finalizar (escribir cierre)</a>
+      {% endif %}
+      {% if "pausar" in acciones %}
+        <a href="{% url 'orden_pausar' ticket.pk %}" class="block w-full rounded-xl bg-orange-500 px-6 py-4 text-center text-lg font-semibold text-white">Pausar (contra-reporte)</a>
+      {% endif %}
+      {% if "reanudar" in acciones %}
+        <form method="post" action="{% url 'orden_reanudar' ticket.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="w-full rounded-xl bg-green-600 px-6 py-5 text-xl font-bold text-white">Reanudar trabajo</button>
+        </form>
+      {% endif %}
+      {% if ticket.estado == "resuelto" %}
+        <p class="rounded-xl bg-teal-50 p-4 text-center text-teal-900">Cierre enviado. Esperando validación del coordinador.</p>
+      {% endif %}
+    </div>
+
+    {% include "tickets/_cierres.html" %}
+    {% include "tickets/_historial.html" %}
+  </div>
+{% endblock %}

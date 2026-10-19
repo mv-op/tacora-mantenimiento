@@ -25,6 +25,14 @@
   · <a href="#" onclick="document.querySelectorAll('.arbol details').forEach(d => d.open = false); return false;">Cerrar todo</a>
 </p>
 
+{% if sin_coordinador %}
+  <p style="background:#fdecea;color:#8a1c1c;padding:10px 14px;border-radius:6px;">
+    <strong>Máquinas sin coordinador ({{ sin_coordinador|length }}):</strong>
+    {% for m in sin_coordinador %}{{ m.nombre }}{% if not forloop.last %}, {% endif %}{% endfor %}.
+    Sus reportes no le llegan a nadie. Asígnelas en la ficha de cada coordinador (Usuarios → «Máquinas que coordina»).
+  </p>
+{% endif %}
+
 <div class="arbol">
   {% if maquinas %}
     <ul>{% for nodo in maquinas %}{% include "admin/activos/nodoactivo/arbol_nodo.html" %}{% endfor %}</ul>

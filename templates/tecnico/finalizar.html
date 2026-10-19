@@ -1,0 +1,41 @@
+{% extends "_base_app.html" %}
+{% block titulo %}Cierre de la orden #{{ ticket.pk }} · Mantenimiento{% endblock %}
+
+{% block paso %}
+  <a href="{% url 'orden' ticket.pk %}" class="mb-4 inline-block rounded-lg bg-white px-3 py-2 font-semibold shadow">‹ Volver a la orden</a>
+
+  {% if rechazo %}
+    <div class="mb-4 rounded-2xl bg-red-100 p-4 text-red-900">
+      <div class="font-bold">Motivo del rechazo anterior</div>
+      <div class="whitespace-pre-line">{{ rechazo.comentario }}</div>
+    </div>
+  {% endif %}
+
+  <form method="post" class="space-y-5 rounded-2xl bg-white p-6 shadow">
+    {% csrf_token %}
+    <h1 class="text-2xl font-bold">Cierre técnico · orden #{{ ticket.pk }}</h1>
+    <p class="text-slate-600">{{ ticket.nodo.ruta }} · Puede dictar con el micrófono del teclado.</p>
+
+    <label class="block">
+      <span class="text-lg font-semibold">Causa raíz</span>
+      <span class="block text-sm text-slate-500">¿Por qué falló? Mínimo {{ minimo }} caracteres.</span>
+      <textarea name="causa_raiz" rows="3" required class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-lg">{{ cierre.causa_raiz }}</textarea>
+    </label>
+    <label class="block">
+      <span class="text-lg font-semibold">Acción correctiva</span>
+      <span class="block text-sm text-slate-500">¿Qué hizo para arreglarlo? Mínimo {{ minimo }} caracteres.</span>
+      <textarea name="accion_correctiva" rows="3" required class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-lg">{{ cierre.accion_correctiva }}</textarea>
+    </label>
+    <label class="block">
+      <span class="text-lg font-semibold">Repuestos usados <span class="font-normal text-slate-500">(opcional)</span></span>
+      <textarea name="repuestos" rows="2" class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-lg">{{ cierre.repuestos }}</textarea>
+    </label>
+    <label class="block">
+      <span class="text-lg font-semibold">Recomendación preventiva</span>
+      <span class="block text-sm text-slate-500">¿Qué hacer para que no vuelva a pasar? Mínimo {{ minimo }} caracteres.</span>
+      <textarea name="recomendacion_preventiva" rows="3" required class="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-lg">{{ cierre.recomendacion_preventiva }}</textarea>
+    </label>
+
+    <button type="submit" class="w-full rounded-xl bg-teal-600 px-6 py-5 text-xl font-bold text-white">Enviar cierre</button>
+  </form>
+{% endblock %}
