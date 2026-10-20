@@ -1,7 +1,7 @@
 # Progreso del proyecto — CMMS Tecnosur Mantenimiento
 
 Última actualización: 19 de octubre de 2026.
-Siguiente sesión: **Fase 7 — terminar despliegue** (falta DNS + HTTPS). Ver sección 5.
+Siguiente sesión: **Fase 7 — probar en navegador y cargar datos del piloto** (DNS y HTTPS ya listos). Ver sección 5.
 
 ---
 
@@ -15,7 +15,7 @@ Siguiente sesión: **Fase 7 — terminar despliegue** (falta DNS + HTTPS). Ver s
 | 4. Pantalla del operador | ✅ Lista | `15522a8` |
 | 5. Coordinador y técnico | ✅ Lista | `3fb42e8` |
 | 6. Notificaciones | ✅ Lista | `d3aa606` |
-| 7. Despliegue piloto | ⏳ **En curso**: app corriendo en la VM, falta DNS + HTTPS | `fcd9c76` … `ac33460` |
+| 7. Despliegue piloto | ⏳ **En curso**: app en https://tecnosur.mantenimiento.tacorapp.com, falta probar y cargar datos | `fcd9c76` … `ac33460` |
 | 8. Dashboards | Pendiente | — |
 | 9. Agente de monitoreo | Pendiente | — |
 
@@ -103,7 +103,9 @@ La guía completa y al día está en `deploy/GUIA.md`.
 | Base de datos | `~/tacora-mantenimiento-data/mantenimiento.sqlite3` (migrada, superusuario creado) | ✅ |
 | `check --deploy` | Solo W005 y W021 (se dejan así) | ✅ |
 | Socket + servicio | `tacora-mantenimiento.socket` → `/run/tacora-mantenimiento.sock` (dueño `www-data`, 600) y `tacora-mantenimiento.service` | ✅ responde `301` |
-| Nginx | `/etc/nginx/sites-available/tacora-mantenimiento` + enlace en `sites-enabled` (solo puerto 80 por ahora) | ✅ `nginx -t` ok; Tacora sigue en `302` |
+| Nginx | `/etc/nginx/sites-available/tacora-mantenimiento` + enlace en `sites-enabled` (80 → 301 a https; 443 con certificado) | ✅ `nginx -t` ok; Tacora sigue en `302` |
+| DNS | Registro A `tecnosur.mantenimiento` → `34.174.134.168` (Hostinger) | ✅ |
+| HTTPS | Certificado Let's Encrypt propio `tecnosur.mantenimiento.tacorapp.com` (vence 2027-01-18, renovación automática). Respaldo previo: `~/backups/2026-10-19/tacora-mantenimiento.antes-certbot` | ✅ https `302` → `/ingresar/` |
 | Plazos | `tacora-mantenimiento-sla.timer`, cada 5 min | ✅ |
 | Respaldo | `tacora-mantenimiento-respaldo.timer`, 2:00 a. m. Bogotá, 30 días, en `~/tacora-mantenimiento-data/respaldos/` | ✅ probado a mano |
 | Respaldo de Nginx previo | `~/backups/2026-10-19/` | ✅ |
@@ -117,25 +119,10 @@ La guía completa y al día está en `deploy/GUIA.md`.
 5. **Errores al journal**: `journalctl -u tacora-mantenimiento`.
 
 ### Lo que falta
-1. **DNS** (lo está gestionando el usuario): registro **A** `tecnosur.mantenimiento` → `34.174.134.168`.
-   Comprobar con `getent hosts tecnosur.mantenimiento.tacorapp.com`.
-2. **HTTPS**: `sudo certbot --nginx -d tecnosur.mantenimiento.tacorapp.com` (mostrarle antes al usuario; solo toca el
-   archivo `tacora-mantenimiento`). Comprobar después que Tacora siga en `302`.
-3. Probar en el navegador, cargar el Excel del árbol, crear usuarios del piloto y coordinadores, revisar plazos.
-4. Programar snapshot semanal del disco en Google Cloud.
-5. Piloto con un grupo pequeño. **Cierre de la Fase 7:** una semana sin pérdida de reportes.
-
-### Pendiente inmediato al retomar
-- El usuario iba a correr una **prueba inicial desde el servidor** (sin navegador). Pedirle el resultado:
-  ```bash
-  H='-H Host:tecnosur.mantenimiento.tacorapp.com -H X-Forwarded-Proto:https'
-  S='--unix-socket /run/tacora-mantenimiento.sock'
-  sudo curl $S $H -s -o /dev/null -w "inicio: %{http_code} -> %{redirect_url}\n" http://localhost/
-  sudo curl $S $H -s -o /dev/null -w "ingreso: %{http_code}\n" http://localhost/ingresar/
-  sudo curl $S $H -s -o /dev/null -w "estilos: %{http_code}\n" http://localhost/static/css/app.css
-  sudo curl $S $H -s http://localhost/ingresar/ | grep -o "<title>.*</title>"
-  ```
-  Esperado: `302 -> .../ingresar/?next=/`, `200`, `200` y el título.
+1. Probar en el navegador (celular y PC): ingreso con el superusuario, admin, pantallas.
+2. Cargar el Excel del árbol, crear usuarios del piloto y coordinadores, revisar plazos.
+3. Programar snapshot semanal del disco en Google Cloud.
+4. Piloto con un grupo pequeño. **Cierre de la Fase 7:** una semana sin pérdida de reportes.
 
 ### Plan B si el DNS se demora (el usuario pidió no usarlo por ahora)
 Nombre gratuito con HTTPS: `tecnosur-mantenimiento.34-174-134-168.sslip.io`. Requiere agregarlo en `ALLOWED_HOSTS` y
